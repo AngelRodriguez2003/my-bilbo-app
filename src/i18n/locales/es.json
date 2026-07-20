@@ -1,0 +1,100 @@
+{
+  "tabs": {
+    "exercises": "Ejercicios",
+    "progress": "Progreso",
+    "settings": "Ajustes"
+  },
+  "exercises": {
+    "title": "Ejercicios",
+    "benchPress": "Press banca",
+    "latPulldown": "Jalón al pecho",
+    "squat": "Sentadilla",
+    "addExercise": "Añadir ejercicio",
+    "exerciseName": "Nombre del ejercicio",
+    "activeCycle": "Ciclo activo",
+    "noActiveCycle": "Sin ciclo activo",
+    "lastSession": "Última: {{weight}} {{unit}} × {{reps}}",
+    "sessionsCount": "{{count}} sesiones",
+    "deleteExercise": "Eliminar ejercicio",
+    "deleteExerciseConfirm": "¿Eliminar este ejercicio y todo su historial?"
+  },
+  "cycle": {
+    "newCycle": "Nuevo ciclo",
+    "startCycle": "Iniciar ciclo",
+    "fromOneRepMax": "Desde 1RM",
+    "manualWeight": "Peso manual",
+    "oneRepMax": "1RM ({{unit}})",
+    "startWeight": "Peso inicial ({{unit}})",
+    "suggestedStart": "Sugerido: 50% de tu 1RM",
+    "increment": "Incremento por sesión ({{unit}})",
+    "unit": "Unidad",
+    "closeCycle": "Cerrar ciclo",
+    "closeCycleConfirm": "¿Cerrar este ciclo? Pasará al historial.",
+    "cycleCompleted": "Ciclo completado",
+    "history": "Historial de ciclos",
+    "startedOn": "Inicio: {{date}}",
+    "endedOn": "Fin: {{date}}",
+    "cycleEndNear": "¡Estás cerca del final del ciclo! Al llegar a ~15 reps, ciérralo y empieza uno nuevo con más peso."
+  },
+  "session": {
+    "logSession": "Registrar serie",
+    "weight": "Peso ({{unit}})",
+    "reps": "Repeticiones",
+    "notes": "Notas (opcional)",
+    "save": "Guardar",
+    "sessionNumber": "Sesión {{index}}",
+    "suggestedWeight": "Peso sugerido",
+    "deleteSession": "Eliminar serie",
+    "deleteSessionConfirm": "¿Eliminar esta serie?"
+  },
+  "projection": {
+    "title": "Proyección",
+    "estimatedOneRepMax": "1RM estimado",
+    "nextWeight": "Próximo peso",
+    "cycleEndWeight": "Peso fin de ciclo",
+    "sessionsLeft": "Sesiones restantes",
+    "notEnoughData": "Registra al menos 2 series para ver la proyección",
+    "approx": "≈ {{value}} {{unit}}",
+    "sessionsLeftValue": "~{{count}}"
+  },
+  "progress": {
+    "title": "Progreso",
+    "selectExercise": "Ejercicio",
+    "reps": "Reps",
+    "weight": "Peso",
+    "noData": "Aún no hay series registradas",
+    "currentCycle": "Ciclo actual",
+    "repsPerSession": "Reps por sesión",
+    "weightPerSession": "Peso por sesión"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "appearance": "Apariencia",
+    "theme": "Tema",
+    "themeSystem": "Sistema",
+    "themeDark": "Oscuro",
+    "themeLight": "Claro",
+    "language": "Idioma",
+    "languageSystem": "Sistema",
+    "spanish": "Español",
+    "english": "English",
+    "training": "Entrenamiento",
+    "defaultUnit": "Unidad por defecto",
+    "defaultIncrement": "Incremento por defecto",
+    "account": "Cuenta",
+    "accountComingSoon": "Inicio de sesión y sincronización en la nube — próximamente",
+    "about": "Acerca de",
+    "aboutBilbo": "El método Bilbo: una serie explosiva empezando al 50% de tu 1RM, subiendo el peso cada sesión hasta llegar a ~15 repeticiones."
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "confirm": "Confirmar",
+    "add": "Añadir",
+    "kg": "kg",
+    "lb": "lb",
+    "reps": "reps",
+    "requiredField": "Este campo es obligatorio",
+    "invalidNumber": "Introduce un número válido"
+  }
+}

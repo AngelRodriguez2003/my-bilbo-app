@@ -1,0 +1,100 @@
+{
+  "tabs": {
+    "exercises": "Exercises",
+    "progress": "Progress",
+    "settings": "Settings"
+  },
+  "exercises": {
+    "title": "Exercises",
+    "benchPress": "Bench press",
+    "latPulldown": "Lat pulldown",
+    "squat": "Squat",
+    "addExercise": "Add exercise",
+    "exerciseName": "Exercise name",
+    "activeCycle": "Active cycle",
+    "noActiveCycle": "No active cycle",
+    "lastSession": "Last: {{weight}} {{unit}} × {{reps}}",
+    "sessionsCount": "{{count}} sessions",
+    "deleteExercise": "Delete exercise",
+    "deleteExerciseConfirm": "Delete this exercise and all its history?"
+  },
+  "cycle": {
+    "newCycle": "New cycle",
+    "startCycle": "Start cycle",
+    "fromOneRepMax": "From 1RM",
+    "manualWeight": "Manual weight",
+    "oneRepMax": "1RM ({{unit}})",
+    "startWeight": "Start weight ({{unit}})",
+    "suggestedStart": "Suggested: 50% of your 1RM",
+    "increment": "Increment per session ({{unit}})",
+    "unit": "Unit",
+    "closeCycle": "Close cycle",
+    "closeCycleConfirm": "Close this cycle? It will move to history.",
+    "cycleCompleted": "Cycle completed",
+    "history": "Cycle history",
+    "startedOn": "Started: {{date}}",
+    "endedOn": "Ended: {{date}}",
+    "cycleEndNear": "You're close to the end of the cycle! Once you hit ~15 reps, close it and start a new one with more weight."
+  },
+  "session": {
+    "logSession": "Log session",
+    "weight": "Weight ({{unit}})",
+    "reps": "Reps",
+    "notes": "Notes (optional)",
+    "save": "Save",
+    "sessionNumber": "Session {{index}}",
+    "suggestedWeight": "Suggested weight",
+    "deleteSession": "Delete session",
+    "deleteSessionConfirm": "Delete this session?"
+  },
+  "projection": {
+    "title": "Projection",
+    "estimatedOneRepMax": "Estimated 1RM",
+    "nextWeight": "Next weight",
+    "cycleEndWeight": "Cycle-end weight",
+    "sessionsLeft": "Sessions left",
+    "notEnoughData": "Log at least 2 sessions to see the projection",
+    "approx": "≈ {{value}} {{unit}}",
+    "sessionsLeftValue": "~{{count}}"
+  },
+  "progress": {
+    "title": "Progress",
+    "selectExercise": "Exercise",
+    "reps": "Reps",
+    "weight": "Weight",
+    "noData": "No sessions logged yet",
+    "currentCycle": "Current cycle",
+    "repsPerSession": "Reps per session",
+    "weightPerSession": "Weight per session"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themeSystem": "System",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "language": "Language",
+    "languageSystem": "System",
+    "spanish": "Español",
+    "english": "English",
+    "training": "Training",
+    "defaultUnit": "Default unit",
+    "defaultIncrement": "Default increment",
+    "account": "Account",
+    "accountComingSoon": "Sign-in and cloud sync — coming soon",
+    "about": "About",
+    "aboutBilbo": "The Bilbo method: one explosive set starting at 50% of your 1RM, adding weight every session until you reach ~15 reps."
+  },
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "add": "Add",
+    "kg": "kg",
+    "lb": "lb",
+    "reps": "reps",
+    "requiredField": "This field is required",
+    "invalidNumber": "Enter a valid number"
+  }
+}
