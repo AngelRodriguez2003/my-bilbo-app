@@ -60,7 +60,9 @@ export default function NewCycleScreen() {
       incrementStep: increment,
       oneRepMax: mode === '1rm' ? (oneRepMax ?? undefined) : undefined,
     });
-    router.back();
+    // Land on the exercise detail. replace() is deterministic across web/native;
+    // back() is unreliable here (canGoBack() lies on web deep links).
+    router.replace(`/exercise/${exerciseId}`);
   };
 
   const unitLabel = t(`common.${unit}`);

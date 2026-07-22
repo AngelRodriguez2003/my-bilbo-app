@@ -42,7 +42,9 @@ export default function NewSessionScreen() {
   const submit = () => {
     if (!weight || !reps) return;
     logSession({ cycleId, weight, reps, notes });
-    router.back();
+    // Land on the exercise detail. replace() is deterministic across web/native;
+    // back() is unreliable here (canGoBack() lies on web deep links).
+    router.replace(`/exercise/${cycle.exerciseId}`);
   };
 
   return (
