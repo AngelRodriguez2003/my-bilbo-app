@@ -1,0 +1,48 @@
+name: Deploy a producción
+
+# Solo despliega cuando se MERGEA un Pull Request a main.
+# Un push directo a main NO dispara el deploy.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  # Permite lanzarlo manualmente desde la pestaña Actions de GitHub.
+  workflow_dispatch:
+
+# Evita despliegues solapados: si llega otro merge mientras uno está
+# corriendo, cancela el anterior.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build y deploy web (EAS Hosting)
+    runs-on: ubuntu-latest
+    # Corre solo si el PR se cerró por MERGE (no por descartarlo),
+    # o si se lanzó manualmente desde Actions.
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout del repo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Si los tests fallan, el job se detiene aquí y NO se despliega.
+      - name: Tests
+        run: npm test -- --ci
+
+      - name: Build web de producción
+        run: npm run build:web
+
+      - name: Deploy a producción (EAS Hosting)
+        run: npx eas-cli@latest deploy --prod --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
