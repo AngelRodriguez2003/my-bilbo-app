@@ -42,7 +42,10 @@ export default function NewSessionScreen() {
   const submit = () => {
     if (!weight || !reps) return;
     logSession({ cycleId, weight, reps, notes });
-    router.back();
+    // dismissTo pops the modal back to the existing exercise detail (single
+    // instance → single back), and navigates there if it isn't in the stack
+    // (deep-link case) without leaving a GO_BACK behind.
+    router.dismissTo(`/exercise/${cycle.exerciseId}`);
   };
 
   return (
