@@ -1,11 +1,11 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AppButton, Card, Field, SegmentedControl } from '@/components/ui';
 import { estimateOneRepMax, startWeightFromOneRepMax } from '@/lib/bilbo';
-import { formatWeight, parseDecimal } from '@/lib/format';
+import { exerciseName, formatWeight, parseDecimal } from '@/lib/format';
 import { useDataStore } from '@/store/data';
 import { useSettingsStore } from '@/store/settings';
 import { Spacing } from '@/theme/colors';
@@ -22,6 +22,7 @@ export default function NewCycleScreen() {
 
   const defaults = useSettingsStore((s) => s.settings);
   const startCycle = useDataStore((s) => s.startCycle);
+  const exercise = useDataStore((s) => s.exercises[exerciseId]);
 
   const [mode, setMode] = useState<Mode>('1rm');
   const [unit, setUnit] = useState<Unit>(defaults.defaultUnit);
@@ -66,6 +67,22 @@ export default function NewCycleScreen() {
 
   return (
     <ScrollView contentContainerStyle={{ padding: Spacing.md, gap: Spacing.md }}>
+      {exercise ? (
+        <Stack.Screen
+          options={{ title: `${t('cycle.newCycle')} · ${exerciseName(exercise, t)}` }}
+        />
+      ) : null}
+      {exercise ? (
+        <View style={{ gap: 2 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 12, textTransform: 'uppercase' }}>
+            {t('tabs.exercises')}
+          </Text>
+          <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700' }}>
+            {exerciseName(exercise, t)}
+          </Text>
+        </View>
+      ) : null}
+
       <SegmentedControl
         options={[
           { value: '1rm' as Mode, label: t('cycle.fromOneRepMax') },
