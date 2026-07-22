@@ -60,9 +60,10 @@ export default function NewCycleScreen() {
       incrementStep: increment,
       oneRepMax: mode === '1rm' ? (oneRepMax ?? undefined) : undefined,
     });
-    // Land on the exercise detail. replace() is deterministic across web/native;
-    // back() is unreliable here (canGoBack() lies on web deep links).
-    router.replace(`/exercise/${exerciseId}`);
+    // dismissTo pops the modal back to the existing exercise detail (single
+    // instance → single back), and navigates there if it isn't in the stack
+    // (deep-link case) without leaving a GO_BACK behind.
+    router.dismissTo(`/exercise/${exerciseId}`);
   };
 
   const unitLabel = t(`common.${unit}`);
