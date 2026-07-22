@@ -1,4 +1,4 @@
-# Desplegar Bilbo como sitio web de producción
+# Desplegar Project Explosive como sitio web de producción
 
 La app se exporta a un sitio **estático** (SSG) con las herramientas de Expo.
 
@@ -32,7 +32,7 @@ npx eas-cli@latest deploy --prod  # publica dist/ a producción
 - El primer `deploy` te pedirá crear/vincular el proyecto (genera un
   `projectId` en `app.json`).
 - Al terminar te da una URL de producción, del tipo
-  `https://bilbo-app.expo.app`.
+  `https://project-explosive.expo.app`.
 - Atajos ya configurados: `npm run deploy` (preview) y `npm run deploy:prod`
   (producción).
 
