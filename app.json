@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "bilbo-app",
-    "slug": "bilbo-app",
+    "name": "Project Explosive",
+    "slug": "project-explosive",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "bilboapp",
+    "scheme": "projectexplosive",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
