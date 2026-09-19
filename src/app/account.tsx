@@ -7,7 +7,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { AppButton, Card, Field, SectionTitle } from '@/components/ui';
 import { formatDateTime } from '@/lib/format';
 import { isSupabaseConfigured, NETWORK_ERROR } from '@/lib/supabase';
-import { useAuthStore, type AuthStatus } from '@/store/auth';
+import { SIGN_OUT_PENDING, useAuthStore, type AuthStatus } from '@/store/auth';
 import { useDataStore } from '@/store/data';
 import { useSettingsStore } from '@/store/settings';
 import { countPendingChanges, useSyncStore } from '@/store/sync';
@@ -200,6 +200,7 @@ function SignedIn({ locale }: { locale: string }) {
 
   const email = useAuthStore((s) => s.email);
   const busy = useAuthStore((s) => s.busy);
+  const authError = useAuthStore((s) => s.error);
   const signOut = useAuthStore((s) => s.signOut);
 
   const syncStatus = useSyncStore((s) => s.status);
@@ -278,12 +279,24 @@ function SignedIn({ locale }: { locale: string }) {
         </Text>
       </Card>
 
-      <AppButton
-        label={t('account.signOut')}
-        variant="danger"
-        onPress={() => void signOut()}
-        disabled={busy}
-      />
+      <View style={{ gap: Spacing.sm }}>
+        {authError ? (
+          <Text style={{ color: colors.danger, fontSize: 13, lineHeight: 19 }}>
+            {authError === SIGN_OUT_PENDING
+              ? t('account.signOutPending', { count: pending })
+              : humanError(authError, t)}
+          </Text>
+        ) : null}
+        <AppButton
+          label={t('account.signOut')}
+          variant="danger"
+          onPress={() => void signOut()}
+          disabled={busy}
+        />
+        <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 18 }}>
+          {t('account.signOutHint')}
+        </Text>
+      </View>
     </>
   );
 }

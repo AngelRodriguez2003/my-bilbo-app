@@ -1,10 +1,16 @@
 import { create } from 'zustand';
 
 import { errorMessage, isSupabaseConfigured, supabase } from '@/lib/supabase';
-import { useSyncStore } from '@/store/sync';
+import { countPendingChanges, useSyncStore } from '@/store/sync';
 import { useWelcomeStore } from '@/store/welcome';
 
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
+
+/**
+ * Centinela: no se pudo cerrar sesión porque quedan cambios sin subir.
+ * La UI lo traduce con el número de cambios pendientes.
+ */
+export const SIGN_OUT_PENDING = '__signOutPending__';
 
 interface AuthState {
   status: AuthStatus;
@@ -83,11 +89,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     if (!supabase) return;
     set({ busy: true, error: null, notice: null });
+
+    // Subir lo pendiente ANTES de cerrar: después no habrá sesión con la que
+    // hablar con la nube y los datos locales se van a borrar. El orden es lo
+    // único que separa "cerrar sesión" de "perder las series de hoy".
+    if (countPendingChanges() > 0) {
+      await useSyncStore.getState().syncNow();
+
+      if (countPendingChanges() > 0) {
+        // Sin conexión, normalmente. Cerrar ahora borraría cambios que no
+        // están en ningún otro sitio, así que no se cierra nada.
+        set({ busy: false, error: SIGN_OUT_PENDING });
+        return;
+      }
+    }
+
     const { error } = await supabase.auth.signOut();
 
-    // Solo al cerrar sesión a propósito, no cuando caduca el token: a nadie
-    // hay que sacarlo de sus datos porque se le haya vencido una sesión.
-    if (!error) useWelcomeStore.getState().reopen();
+    if (!error) {
+      // Solo al cerrar sesión a propósito, no cuando caduca el token: a nadie
+      // hay que sacarlo de sus datos porque se le haya vencido una sesión.
+      useSyncStore.getState().forgetDevice();
+      useWelcomeStore.getState().reopen();
+    }
 
     set({ busy: false, error: error ? errorMessage(error) : null });
   },

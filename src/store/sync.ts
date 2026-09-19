@@ -30,6 +30,8 @@ interface SyncState {
   setUser: (userId: string | null) => Promise<void>;
   syncNow: (options?: { full?: boolean }) => Promise<void>;
   scheduleSync: () => void;
+  /** Borra del dispositivo los datos de la cuenta. Solo al cerrar sesión. */
+  forgetDevice: () => void;
 }
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -49,8 +51,10 @@ export const useSyncStore = create<SyncState>()(
 
       setUser: async (userId) => {
         if (!userId) {
-          // Cerrar sesión no borra nada: los datos locales siguen siendo
-          // suyos y la app continúa funcionando sin cuenta.
+          // Aquí NO se borra nada: esto también se dispara cuando caduca el
+          // token, y nadie debería perder sus datos porque se le haya vencido
+          // una sesión en segundo plano. El borrado al cerrar sesión a
+          // propósito lo hace forgetDevice(), desde signOut().
           set({ sessionUserId: null, status: 'idle', error: null });
           return;
         }
@@ -109,6 +113,24 @@ export const useSyncStore = create<SyncState>()(
         })();
 
         return inFlight;
+      },
+
+      forgetDevice: () => {
+        // Los datos se quedan en la nube; signOut() se asegura de que no haya
+        // nada sin subir antes de llamar aquí. Dejarlos en el dispositivo los
+        // expondría a quien coja el móvil después de cerrar sesión.
+        useDataStore.getState().resetLocal();
+        // Deja la app como recién instalada, no con la lista vacía.
+        useDataStore.getState().seedDefaults();
+        set({
+          ownerUserId: null,
+          sessionUserId: null,
+          lastPushedAt: null,
+          lastPulledAt: null,
+          lastSyncedAt: null,
+          status: 'idle',
+          error: null,
+        });
       },
 
       scheduleSync: () => {
