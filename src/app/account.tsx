@@ -56,6 +56,7 @@ function DoneButton() {
 export default function AccountScreen() {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const dismiss = useDismiss();
 
   const status = useAuthStore((s) => s.status);
@@ -75,7 +76,12 @@ export default function AccountScreen() {
     }
   }, [status, dismiss]);
 
-  const header = <Stack.Screen options={{ headerRight: () => <DoneButton /> }} />;
+  // Con historial detrás, el modal ya trae su flecha de retroceso y un segundo
+  // botón para lo mismo solo ensucia la cabecera. El "Listo" existe para el
+  // caso contrario: llegar por URL directa, donde no hay flecha ninguna.
+  const header = (
+    <Stack.Screen options={router.canGoBack() ? {} : { headerRight: () => <DoneButton /> }} />
+  );
 
   if (!isSupabaseConfigured) {
     return (
