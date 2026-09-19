@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { errorMessage, isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { useSyncStore } from '@/store/sync';
+import { useWelcomeStore } from '@/store/welcome';
 
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
 
@@ -83,6 +84,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!supabase) return;
     set({ busy: true, error: null, notice: null });
     const { error } = await supabase.auth.signOut();
+
+    // Solo al cerrar sesión a propósito, no cuando caduca el token: a nadie
+    // hay que sacarlo de sus datos porque se le haya vencido una sesión.
+    if (!error) useWelcomeStore.getState().reopen();
+
     set({ busy: false, error: error ? errorMessage(error) : null });
   },
 

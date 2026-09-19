@@ -7,7 +7,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { AppButton, Card, Field, SectionTitle } from '@/components/ui';
 import { formatDateTime } from '@/lib/format';
 import { isSupabaseConfigured, NETWORK_ERROR } from '@/lib/supabase';
-import { useAuthStore } from '@/store/auth';
+import { useAuthStore, type AuthStatus } from '@/store/auth';
 import { useDataStore } from '@/store/data';
 import { useSettingsStore } from '@/store/settings';
 import { countPendingChanges, useSyncStore } from '@/store/sync';
@@ -61,19 +61,17 @@ export default function AccountScreen() {
 
   const status = useAuthStore((s) => s.status);
 
-  // Al iniciar sesión, devolver al usuario a la app. Quedarse en esta
-  // pantalla enseñándole "sesión iniciada" no le deja hacer nada, y llegando
-  // por URL directa no hay ni botón de volver. Solo se cierra tras un cambio
-  // real de estado: abrirla ya con sesión iniciada la deja abierta, que es
-  // justo lo que se quiere para consultar el estado o cerrar sesión.
-  const cameFromSignedOut = useRef(false);
+  // Cualquier cambio de sesión saca de esta pantalla: al entrar, para
+  // devolver al usuario a la app; al salir, para que el layout raíz pueda
+  // mostrar la bienvenida, que es el punto de entrada sin cuenta. Solo
+  // reacciona a un cambio real, así que abrirla ya con la sesión puesta la
+  // deja abierta — que es lo que se quiere para ver el estado o cerrar sesión.
+  const previousStatus = useRef<AuthStatus | null>(null);
   useEffect(() => {
-    if (status === 'signedOut') {
-      cameFromSignedOut.current = true;
-    } else if (status === 'signedIn' && cameFromSignedOut.current) {
-      cameFromSignedOut.current = false;
-      dismiss();
-    }
+    if (status === 'loading') return;
+    const previous = previousStatus.current;
+    previousStatus.current = status;
+    if (previous && previous !== status) dismiss();
   }, [status, dismiss]);
 
   // Con historial detrás, el modal ya trae su flecha de retroceso y un segundo
