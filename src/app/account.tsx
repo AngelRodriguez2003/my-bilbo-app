@@ -72,17 +72,11 @@ export default function AccountScreen() {
     previousStatus.current = status;
     if (!previous || previous === status) return;
 
-    if (status === 'signedIn') {
-      // Entrar devuelve a la app, donde estaba el usuario.
-      dismiss();
-    } else {
-      // Salir manda a la bienvenida, que es el punto de entrada sin sesión.
-      // Hay que navegar a mano: esta pantalla vive fuera de los grupos
-      // protegidos del layout raíz (la bienvenida necesita poder abrirla para
-      // iniciar sesión), así que cambiar el gate no la quita de encima.
-      router.replace('/welcome');
-    }
-  }, [status, dismiss, router]);
+    // Entrar devuelve a la app, donde estaba el usuario. Salir lo lleva a la
+    // bienvenida, pero de eso se encarga el layout raíz: es el único sitio
+    // donde la ruta /welcome ya existe cuando hace falta navegar a ella.
+    if (status === 'signedIn') dismiss();
+  }, [status, dismiss]);
 
   // Con historial detrás, el modal ya trae su flecha de retroceso y un segundo
   // botón para lo mismo solo ensucia la cabecera. El "Listo" existe para el

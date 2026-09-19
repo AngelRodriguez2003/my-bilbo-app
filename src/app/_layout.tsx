@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -37,10 +37,24 @@ function useWelcomeGate() {
 
 function RootStack() {
   const { ready, showWelcome } = useWelcomeGate();
+  const router = useRouter();
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
   }, [ready]);
+
+  // Sin sesión, la bienvenida es la vista de entrada. Si el gate se abre
+  // estando en otra pantalla —cerrar sesión desde Cuenta— hay que llevar allí
+  // a mano: Cuenta vive fuera de los grupos protegidos, así que abrir el gate
+  // no la quita de encima.
+  //
+  // Y este efecto tiene que vivir AQUÍ, no en la pantalla de Cuenta: React
+  // ejecuta los efectos de los hijos antes que los del padre, así que desde
+  // Cuenta la ruta /welcome todavía no está registrada en el navegador y el
+  // replace se pierde sin dar ningún error.
+  useEffect(() => {
+    if (showWelcome) router.replace('/welcome');
+  }, [showWelcome, router]);
 
   const { colors, scheme } = useTheme();
   const { t } = useTranslation();
