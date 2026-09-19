@@ -130,5 +130,13 @@
     "reps": "reps",
     "requiredField": "This field is required",
     "invalidNumber": "Enter a valid number"
+  },
+  "welcome": {
+    "title": "Save your progress",
+    "body": "Sign in to back up your workouts to the cloud and see them on all your devices, or keep using the app on this device only.",
+    "signIn": "Sign in",
+    "continueLocal": "Continue without an account",
+    "logoLabel": "App logo",
+    "hint": "You can change this any time in Settings."
   }
 }
