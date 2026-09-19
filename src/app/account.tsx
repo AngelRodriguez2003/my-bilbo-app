@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { Stack, useRouter } from 'expo-router';
 import type { TFunction } from 'i18next';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { AppButton, Card, Field, SectionTitle } from '@/components/ui';
 import { formatDateTime } from '@/lib/format';
@@ -21,15 +22,65 @@ function humanError(error: string | null, t: TFunction): string | null {
   return error === NETWORK_ERROR ? t('account.networkError') : error;
 }
 
+/**
+ * Salir de esta pantalla. Abriendo /account directamente por URL no hay
+ * historial al que volver y el modal se queda sin botón de retroceso, así
+ * que en ese caso vamos al inicio en vez de dejar al usuario encerrado.
+ */
+function useDismiss() {
+  const router = useRouter();
+  // Estable: es dependencia de un efecto.
+  return useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  }, [router]);
+}
+
+function DoneButton() {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const dismiss = useDismiss();
+
+  return (
+    <Pressable
+      onPress={dismiss}
+      hitSlop={12}
+      style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, paddingHorizontal: Spacing.sm })}>
+      <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '600' }}>
+        {t('common.done')}
+      </Text>
+    </Pressable>
+  );
+}
+
 export default function AccountScreen() {
   const { colors } = useTheme();
   const { t, i18n } = useTranslation();
+  const dismiss = useDismiss();
 
   const status = useAuthStore((s) => s.status);
+
+  // Al iniciar sesión, devolver al usuario a la app. Quedarse en esta
+  // pantalla enseñándole "sesión iniciada" no le deja hacer nada, y llegando
+  // por URL directa no hay ni botón de volver. Solo se cierra tras un cambio
+  // real de estado: abrirla ya con sesión iniciada la deja abierta, que es
+  // justo lo que se quiere para consultar el estado o cerrar sesión.
+  const cameFromSignedOut = useRef(false);
+  useEffect(() => {
+    if (status === 'signedOut') {
+      cameFromSignedOut.current = true;
+    } else if (status === 'signedIn' && cameFromSignedOut.current) {
+      cameFromSignedOut.current = false;
+      dismiss();
+    }
+  }, [status, dismiss]);
+
+  const header = <Stack.Screen options={{ headerRight: () => <DoneButton /> }} />;
 
   if (!isSupabaseConfigured) {
     return (
       <ScrollView contentContainerStyle={{ padding: Spacing.md, gap: Spacing.md }}>
+        {header}
         <Card style={{ gap: Spacing.sm }}>
           <SectionTitle>{t('account.title')}</SectionTitle>
           <Text style={{ color: colors.text, fontSize: 14 }}>{t('account.notConfigured')}</Text>
@@ -44,6 +95,7 @@ export default function AccountScreen() {
   if (status === 'loading') {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        {header}
         <ActivityIndicator color={colors.accent} />
       </View>
     );
@@ -51,6 +103,7 @@ export default function AccountScreen() {
 
   return (
     <ScrollView contentContainerStyle={{ padding: Spacing.md, gap: Spacing.md }}>
+      {header}
       {status === 'signedIn' ? <SignedIn locale={i18n.language} /> : <SignInForm />}
     </ScrollView>
   );

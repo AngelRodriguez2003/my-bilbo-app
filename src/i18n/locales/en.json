@@ -129,7 +129,8 @@
     "lb": "lb",
     "reps": "reps",
     "requiredField": "This field is required",
-    "invalidNumber": "Enter a valid number"
+    "invalidNumber": "Enter a valid number",
+    "done": "Done"
   },
   "welcome": {
     "title": "Save your progress",

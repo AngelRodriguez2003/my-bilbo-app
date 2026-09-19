@@ -194,14 +194,29 @@ export const useDataStore = create<DataState>()(
       },
 
       mergeRemote: ({ exercises, cycles, sessions }) => {
-        set((s) => ({
-          exercises: mergeById(s.exercises, exercises),
-          cycles: mergeById(s.cycles, cycles),
-          sessions: mergeById(s.sessions, sessions),
-          // Si la nube ya trae ejercicios, no hay que sembrar los de por
-          // defecto: duplicarían la lista del usuario en este dispositivo.
-          seeded: s.seeded || exercises.length > 0,
-        }));
+        set((s) => {
+          const merged = {
+            exercises: mergeById(s.exercises, exercises),
+            cycles: mergeById(s.cycles, cycles),
+            sessions: mergeById(s.sessions, sessions),
+            // Si la nube ya trae ejercicios, no hay que sembrar los de por
+            // defecto: duplicarían la lista del usuario en este dispositivo.
+            seeded: s.seeded || exercises.length > 0,
+          };
+
+          // Devolver el mismo estado es la única forma de que zustand NO avise
+          // a sus suscriptores. Y hay que hacerlo: la sincronización escucha
+          // los cambios del store para programar la siguiente subida, así que
+          // un merge que "cambia" sin cambiar nada se realimenta y deja la app
+          // pidiendo al backend cada pocos segundos para siempre.
+          const unchanged =
+            merged.exercises === s.exercises &&
+            merged.cycles === s.cycles &&
+            merged.sessions === s.sessions &&
+            merged.seeded === s.seeded;
+
+          return unchanged ? s : merged;
+        });
       },
 
       resetLocal: () => {

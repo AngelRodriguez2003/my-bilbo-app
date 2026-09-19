@@ -129,7 +129,8 @@
     "lb": "lb",
     "reps": "reps",
     "requiredField": "Este campo es obligatorio",
-    "invalidNumber": "Introduce un número válido"
+    "invalidNumber": "Introduce un número válido",
+    "done": "Listo"
   },
   "welcome": {
     "title": "Guarda tu progreso",
