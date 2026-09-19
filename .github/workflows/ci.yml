@@ -1,0 +1,50 @@
+name: CI
+
+# Feedback en el propio Pull Request, antes de mergear. El deploy sigue
+# viviendo en deploy-prod.yml y solo se dispara al mergear: añadir estos
+# triggers allí no habría servido, porque su job está condicionado a
+# `pull_request.merged == true` y se saltaría entero.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+# Si llegan varios push seguidos a la misma rama, solo interesa el último.
+concurrency:
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Tipos, tests y build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Comprobar tipos
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npm test -- --ci
+
+      # El export estático pre-renderiza cada ruta en Node. Es el paso que
+      # detecta el código que solo funciona en el navegador (todo lo que
+      # toca `window` al importarse), que de otro modo rompería el deploy
+      # después de mergear. Con los secrets puestos, ejercita el mismo
+      # camino que producción; sin ellos el build también pasa, con la
+      # sincronización desactivada.
+      - name: Build web
+        run: npm run build:web
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}

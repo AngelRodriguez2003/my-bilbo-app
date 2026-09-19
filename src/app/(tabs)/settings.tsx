@@ -1,8 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Card, Field, SectionTitle, SegmentedControl } from '@/components/ui';
 import { parseDecimal } from '@/lib/format';
+import { useAuthStore } from '@/store/auth';
 import { useSettingsStore } from '@/store/settings';
 import { Spacing } from '@/theme/colors';
 import { useTheme } from '@/theme/ThemeContext';
@@ -11,6 +14,8 @@ import type { LanguagePreference, ThemePreference, Unit } from '@/types/models';
 export default function SettingsScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+
+  const accountEmail = useAuthStore((s) => s.email);
 
   const settings = useSettingsStore((s) => s.settings);
   const setTheme = useSettingsStore((s) => s.setTheme);
@@ -78,9 +83,31 @@ export default function SettingsScreen() {
 
       <Card>
         <SectionTitle>{t('settings.account')}</SectionTitle>
-        <Text style={{ color: colors.textMuted, fontSize: 13 }}>
-          {t('settings.accountComingSoon')}
-        </Text>
+        {/* `Link asChild` pisa el `style` del hijo, así que el layout va en
+            una View interna y el feedback de pulsación en los children. */}
+        <Link href="/account" asChild>
+          <Pressable>
+            {({ pressed }) => (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: Spacing.sm,
+                  opacity: pressed ? 0.6 : 1,
+                }}>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={{ color: colors.text, fontSize: 15 }}>
+                    {accountEmail ?? t('account.noAccount')}
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                    {t('settings.accountManage')}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </View>
+            )}
+          </Pressable>
+        </Link>
       </Card>
 
       <Card>

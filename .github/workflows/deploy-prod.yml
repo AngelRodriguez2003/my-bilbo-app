@@ -39,8 +39,13 @@ jobs:
       - name: Tests
         run: npm test -- --ci
 
+      # Las EXPO_PUBLIC_* se inlinean en el bundle en este paso: sin ellas
+      # la web se despliega con la sincronización desactivada.
       - name: Build web de producción
         run: npm run build:web
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Deploy a producción (EAS Hosting)
         run: npx eas-cli@latest deploy --prod --non-interactive

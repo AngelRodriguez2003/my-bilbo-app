@@ -47,4 +47,6 @@ export interface Settings {
   language: LanguagePreference;
   defaultUnit: Unit;
   defaultIncrement: number;
+  /** ISO date del último cambio; arbitra la sincronización last-write-wins. */
+  updatedAt: string;
 }

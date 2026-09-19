@@ -1,0 +1,36 @@
+name: Mantener Supabase despierto
+
+# El plan gratuito de Supabase pausa un proyecto tras 7 días sin actividad.
+# Una petición de lectura basta para reiniciar ese contador. Dos veces por
+# semana deja margen de sobra si algún run falla.
+on:
+  schedule:
+    - cron: '0 6 * * 1,4' # lunes y jueves, 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping a la API REST
+    runs-on: ubuntu-latest
+    steps:
+      - name: Leer una fila
+        env:
+          SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Faltan los secrets EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY."
+            exit 1
+          fi
+
+          # RLS hace que la clave anónima no vea ninguna fila; da igual, lo que
+          # cuenta como actividad es que la petición llegue a la base de datos.
+          status=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            "$SUPABASE_URL/rest/v1/exercises?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+
+          echo "HTTP $status"
+          # 200 con lista vacía es lo esperado. Un 4xx/5xx significa que el
+          # proyecto está pausado o que las claves ya no valen.
+          [ "$status" = "200" ]

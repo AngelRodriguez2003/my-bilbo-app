@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import '@/i18n';
+import { useCloudSync } from '@/lib/useCloudSync';
 import { useDataStore } from '@/store/data';
 import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 
@@ -31,6 +32,10 @@ function RootStack() {
           name="session/new"
           options={{ title: t('session.logSession'), presentation: 'modal' }}
         />
+        <Stack.Screen
+          name="account"
+          options={{ title: t('account.title'), presentation: 'modal' }}
+        />
       </Stack>
     </>
   );
@@ -41,6 +46,9 @@ export default function RootLayout() {
   useEffect(() => {
     useDataStore.getState().seedDefaults();
   }, []);
+
+  // Restaura la sesión y mantiene el dispositivo sincronizado con la nube.
+  useCloudSync();
 
   return (
     <ThemeProvider>

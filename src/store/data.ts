@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { mergeById } from '@/lib/merge';
 import type { Cycle, Exercise, Session, Unit } from '@/types/models';
 
 function newId(): string {
@@ -39,6 +40,15 @@ interface DataState {
 
   logSession: (input: { cycleId: string; weight: number; reps: number; notes?: string }) => Session;
   removeSession: (id: string) => void;
+
+  /** Aplica los registros que llegan de la nube (last-write-wins por updatedAt). */
+  mergeRemote: (incoming: {
+    exercises: Exercise[];
+    cycles: Cycle[];
+    sessions: Session[];
+  }) => void;
+  /** Vacía los datos locales: solo al entrar con una cuenta distinta. */
+  resetLocal: () => void;
 }
 
 const SEED_EXERCISES: Array<{ i18nKey: string; fallbackName: string }> = [
@@ -181,6 +191,21 @@ export const useDataStore = create<DataState>()(
             sessions: { ...s.sessions, [id]: { ...session, deleted: true, updatedAt: now() } },
           };
         });
+      },
+
+      mergeRemote: ({ exercises, cycles, sessions }) => {
+        set((s) => ({
+          exercises: mergeById(s.exercises, exercises),
+          cycles: mergeById(s.cycles, cycles),
+          sessions: mergeById(s.sessions, sessions),
+          // Si la nube ya trae ejercicios, no hay que sembrar los de por
+          // defecto: duplicarían la lista del usuario en este dispositivo.
+          seeded: s.seeded || exercises.length > 0,
+        }));
+      },
+
+      resetLocal: () => {
+        set({ exercises: {}, cycles: {}, sessions: {}, seeded: false });
       },
     }),
     {
