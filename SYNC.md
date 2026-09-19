@@ -32,6 +32,13 @@ El script es idempotente: puedes volver a ejecutarlo cuando cambie el esquema.
 2. En Supabase, **Project Settings → API**, copia:
    - *Project URL* → `EXPO_PUBLIC_SUPABASE_URL`
    - la clave *anon* / *publishable* → `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+   La URL es **solo el origen**: `https://<ref>.supabase.co`, sin ruta ni barra
+   final. Si pegas el endpoint REST (`.../rest/v1`), supabase-js construye el
+   alta contra `.../rest/v1/auth/v1/signup`, la petición acaba en PostgREST y
+   devuelve un `PGRST125 - Invalid path specified in request URL` que no
+   menciona en ningún momento que el problema está en el `.env`. La app
+   normaliza la URL y avisa en consola, pero conviene dejarla bien.
 3. Reinicia el servidor de desarrollo. Las variables `EXPO_PUBLIC_*` se
    inlinean en el bundle al arrancar, así que un cambio en `.env` no se aplica
    en caliente.
