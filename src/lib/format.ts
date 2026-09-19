@@ -27,3 +27,13 @@ export function parseDecimal(raw: string): number | null {
   const value = Number(normalized);
   return Number.isFinite(value) && value > 0 ? value : null;
 }
+
+/** Fecha + hora corta, para "última sincronización". */
+export function formatDateTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(locale === 'es' ? 'es-ES' : 'en-US', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}

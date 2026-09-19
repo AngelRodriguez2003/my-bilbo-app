@@ -48,6 +48,11 @@ CDN. Para que la recarga directa de rutas dinámicas funcione, configura un
 
 ## Nota sobre los datos
 
-Esta versión guarda todo en el navegador (localStorage). Cada dominio/origen
-tiene su propio almacenamiento; no se sincroniza entre dispositivos todavía
-(eso es la Fase 2: login + nube).
+La app guarda todo en el dispositivo (localStorage en web) y, si inicias
+sesión, lo replica en Supabase para que el móvil y el ordenador vean lo mismo.
+Sin cuenta sigue funcionando solo en local.
+
+Para que la web desplegada tenga sincronización, el build necesita los secrets
+`EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY` en el repositorio
+(**Settings → Secrets and variables → Actions**). El workflow ya se los pasa al
+paso de build. Puesta en marcha completa en [SYNC.md](SYNC.md).
