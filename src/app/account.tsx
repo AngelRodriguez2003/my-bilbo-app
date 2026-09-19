@@ -61,18 +61,28 @@ export default function AccountScreen() {
 
   const status = useAuthStore((s) => s.status);
 
-  // Cualquier cambio de sesión saca de esta pantalla: al entrar, para
-  // devolver al usuario a la app; al salir, para que el layout raíz pueda
-  // mostrar la bienvenida, que es el punto de entrada sin cuenta. Solo
-  // reacciona a un cambio real, así que abrirla ya con la sesión puesta la
-  // deja abierta — que es lo que se quiere para ver el estado o cerrar sesión.
+  // Cualquier cambio de sesión saca de esta pantalla. Solo reacciona a un
+  // cambio real, así que abrirla ya con la sesión puesta la deja abierta —
+  // que es lo que se quiere para ver el estado de sincronización.
   const previousStatus = useRef<AuthStatus | null>(null);
   useEffect(() => {
     if (status === 'loading') return;
+
     const previous = previousStatus.current;
     previousStatus.current = status;
-    if (previous && previous !== status) dismiss();
-  }, [status, dismiss]);
+    if (!previous || previous === status) return;
+
+    if (status === 'signedIn') {
+      // Entrar devuelve a la app, donde estaba el usuario.
+      dismiss();
+    } else {
+      // Salir manda a la bienvenida, que es el punto de entrada sin sesión.
+      // Hay que navegar a mano: esta pantalla vive fuera de los grupos
+      // protegidos del layout raíz (la bienvenida necesita poder abrirla para
+      // iniciar sesión), así que cambiar el gate no la quita de encima.
+      router.replace('/welcome');
+    }
+  }, [status, dismiss, router]);
 
   // Con historial detrás, el modal ya trae su flecha de retroceso y un segundo
   // botón para lo mismo solo ensucia la cabecera. El "Listo" existe para el
