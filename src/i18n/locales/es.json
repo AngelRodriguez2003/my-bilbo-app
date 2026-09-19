@@ -130,5 +130,13 @@
     "reps": "reps",
     "requiredField": "Este campo es obligatorio",
     "invalidNumber": "Introduce un número válido"
+  },
+  "welcome": {
+    "title": "Guarda tu progreso",
+    "body": "Inicia sesión para guardar tus entrenamientos en la nube y verlos en todos tus dispositivos, o sigue usando la app solo en este dispositivo.",
+    "signIn": "Iniciar sesión",
+    "continueLocal": "Continuar sin cuenta",
+    "logoLabel": "Logo de la app",
+    "hint": "Podrás cambiarlo cuando quieras en Ajustes."
   }
 }
