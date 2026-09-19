@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -16,31 +16,45 @@ import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 void SplashScreen.preventAutoHideAsync();
 
 /**
- * La bienvenida solo se ofrece en el primer arranque: sin entrenamientos, sin
- * sesión y sin haber elegido ya. `ready` espera a que las stores persistidas y
- * la sesión de Supabase estén leídas; si no, un usuario con datos vería la
- * bienvenida un instante y uno nuevo vería las pestañas.
+ * La bienvenida se ofrece mientras no haya sesión y el usuario no haya
+ * elegido ya: en el primer arranque, y otra vez al cerrar sesión, porque
+ * salir de la cuenta reabre exactamente la pregunta que esta pantalla hace.
+ *
+ * `ready` espera a que las stores persistidas y la sesión de Supabase estén
+ * leídas; si no, un usuario con sesión vería la bienvenida un instante.
  */
 function useWelcomeGate() {
   const welcomeHydrated = useHydrated(useWelcomeStore);
   const dataHydrated = useHydrated(useDataStore);
   const authStatus = useAuthStore((s) => s.status);
   const dismissed = useWelcomeStore((s) => s.dismissed);
-  const hasCycles = useDataStore((s) => Object.keys(s.cycles).length > 0);
 
   const ready = welcomeHydrated && dataHydrated && authStatus !== 'loading';
-  const showWelcome =
-    ready && isSupabaseConfigured && authStatus === 'signedOut' && !dismissed && !hasCycles;
+  const showWelcome = ready && isSupabaseConfigured && authStatus === 'signedOut' && !dismissed;
 
   return { ready, showWelcome };
 }
 
 function RootStack() {
   const { ready, showWelcome } = useWelcomeGate();
+  const router = useRouter();
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
   }, [ready]);
+
+  // Sin sesión, la bienvenida es la vista de entrada. Si el gate se abre
+  // estando en otra pantalla —cerrar sesión desde Cuenta— hay que llevar allí
+  // a mano: Cuenta vive fuera de los grupos protegidos, así que abrir el gate
+  // no la quita de encima.
+  //
+  // Y este efecto tiene que vivir AQUÍ, no en la pantalla de Cuenta: React
+  // ejecuta los efectos de los hijos antes que los del padre, así que desde
+  // Cuenta la ruta /welcome todavía no está registrada en el navegador y el
+  // replace se pierde sin dar ningún error.
+  useEffect(() => {
+    if (showWelcome) router.replace('/welcome');
+  }, [showWelcome, router]);
 
   const { colors, scheme } = useTheme();
   const { t } = useTranslation();

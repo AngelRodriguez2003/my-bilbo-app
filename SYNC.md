@@ -32,6 +32,13 @@ El script es idempotente: puedes volver a ejecutarlo cuando cambie el esquema.
 2. En Supabase, **Project Settings → API**, copia:
    - *Project URL* → `EXPO_PUBLIC_SUPABASE_URL`
    - la clave *anon* / *publishable* → `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+   La URL es **solo el origen**: `https://<ref>.supabase.co`, sin ruta ni barra
+   final. Si pegas el endpoint REST (`.../rest/v1`), supabase-js construye el
+   alta contra `.../rest/v1/auth/v1/signup`, la petición acaba en PostgREST y
+   devuelve un `PGRST125 - Invalid path specified in request URL` que no
+   menciona en ningún momento que el problema está en el `.env`. La app
+   normaliza la URL y avisa en consola, pero conviene dejarla bien.
 3. Reinicia el servidor de desarrollo. Las variables `EXPO_PUBLIC_*` se
    inlinean en el bundle al arrancar, así que un cambio en `.env` no se aplica
    en caliente.
@@ -120,6 +127,20 @@ Sin conexión no pasa nada: los cambios se quedan en el dispositivo y suben en
 la siguiente pasada. Los cursores solo avanzan cuando la pasada entera termina
 bien.
 
+### Qué pasa con los datos locales al cerrar sesión
+
+Se borran del dispositivo, pero **nunca antes de subirlos**. `signOut()`
+sincroniza primero; si queda algo sin subir —típicamente por estar sin
+cobertura— no cierra la sesión y lo dice, porque borrar en ese momento
+destruiría series que no están en ningún otro sitio.
+
+Una vez cerrada, el dispositivo queda como recién instalado y se vuelve a la
+bienvenida. Los datos siguen en la nube y regresan al iniciar sesión. Dejarlos
+cargados sería enseñar tu historial a quien coja el móvil después.
+
+Cuando **caduca el token** no se borra nada: perder una sesión en segundo plano
+no es lo mismo que pedir salir.
+
 ### Qué pasa con los datos locales al iniciar sesión
 
 - **Dispositivo recién instalado** (solo los ejercicios de ejemplo, sin ciclos
@@ -130,7 +151,8 @@ bien.
 - **Entras con una cuenta distinta a la de los datos de ese dispositivo**: los
   locales se sustituyen por los de la cuenta nueva. La alternativa sería subir
   el historial de una persona a la cuenta de otra, que es peor y además
-  contamina la nube.
+  contamina la nube. Como cerrar sesión ya limpia el dispositivo, este caso
+  queda de red de seguridad más que de camino habitual.
 
 ### Qué NO hace
 

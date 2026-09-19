@@ -118,7 +118,9 @@
     "notConfigured": "La sincronización no está activada en esta copia de la app.",
     "notConfiguredHint": "Configura EXPO_PUBLIC_SUPABASE_URL y EXPO_PUBLIC_SUPABASE_ANON_KEY en el archivo .env (ver SYNC.md).",
     "otherAccountWarning": "Si entras con otra cuenta, los datos guardados en este dispositivo se sustituyen por los de esa cuenta.",
-    "networkError": "Sin conexión con el servidor. Los cambios siguen guardados en el dispositivo."
+    "networkError": "Sin conexión con el servidor. Los cambios siguen guardados en el dispositivo.",
+    "signOutPending": "No se cerró la sesión: quedan {{count}} cambios sin subir a la nube. Conéctate e inténtalo de nuevo para no perderlos.",
+    "signOutHint": "Se sube lo que quede pendiente y se borran los datos de este dispositivo. Siguen en la nube: vuelven al iniciar sesión."
   },
   "common": {
     "cancel": "Cancelar",
@@ -129,7 +131,8 @@
     "lb": "lb",
     "reps": "reps",
     "requiredField": "Este campo es obligatorio",
-    "invalidNumber": "Introduce un número válido"
+    "invalidNumber": "Introduce un número válido",
+    "done": "Listo"
   },
   "welcome": {
     "title": "Guarda tu progreso",

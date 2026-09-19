@@ -118,7 +118,9 @@
     "notConfigured": "Sync is not enabled in this build of the app.",
     "notConfiguredHint": "Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in your .env file (see SYNC.md).",
     "otherAccountWarning": "Signing in with a different account replaces the data stored on this device with that account's data.",
-    "networkError": "No connection to the server. Your changes are still saved on this device."
+    "networkError": "No connection to the server. Your changes are still saved on this device.",
+    "signOutPending": "Didn't sign out: {{count}} changes are still waiting to upload. Reconnect and try again so you don't lose them.",
+    "signOutHint": "Anything pending is uploaded first, then this device is wiped. Your data stays in the cloud and comes back when you sign in."
   },
   "common": {
     "cancel": "Cancel",
@@ -129,7 +131,8 @@
     "lb": "lb",
     "reps": "reps",
     "requiredField": "This field is required",
-    "invalidNumber": "Enter a valid number"
+    "invalidNumber": "Enter a valid number",
+    "done": "Done"
   },
   "welcome": {
     "title": "Save your progress",

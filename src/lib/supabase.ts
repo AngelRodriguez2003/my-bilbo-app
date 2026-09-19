@@ -2,10 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
+import { normalizeProjectUrl } from '@/lib/supabaseUrl';
+
 // Variables EXPO_PUBLIC_*: Expo las inlinea en el bundle, así que solo pueden
 // contener valores públicos. La clave anon/publishable lo es por diseño; los
 // datos los protege RLS (ver supabase/schema.sql). La service key NUNCA va aquí.
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const url = normalizeProjectUrl(process.env.EXPO_PUBLIC_SUPABASE_URL);
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 /** false cuando el .env no está configurado: la app funciona igual, solo en local. */
