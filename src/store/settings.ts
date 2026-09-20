@@ -13,6 +13,8 @@ interface SettingsState {
   setDefaultIncrement: (increment: number) => void;
   /** Aplica los ajustes que llegan de la nube (solo si son más recientes). */
   applyRemoteSettings: (remote: Settings) => void;
+  /** Aplica los ajustes de una copia local restaurada por el usuario. */
+  applyImportedSettings: (imported: Settings) => void;
 }
 
 /** Ajustes que nunca se han tocado: cualquier versión en la nube les gana. */
@@ -44,6 +46,14 @@ export const useSettingsStore = create<SettingsState>()(
         },
         setDefaultUnit: (defaultUnit) => set(patch({ defaultUnit })),
         setDefaultIncrement: (defaultIncrement) => set(patch({ defaultIncrement })),
+
+        // Restaurar una copia es una decisión explícita: se sella con la hora
+        // de ahora para que gane a lo que haya en la nube, igual que si el
+        // usuario acabara de tocar cada ajuste a mano.
+        applyImportedSettings: (imported) => {
+          i18n.changeLanguage(resolveLanguage(imported.language));
+          set(patch(imported));
+        },
 
         applyRemoteSettings: (remote) =>
           set((s) => {
