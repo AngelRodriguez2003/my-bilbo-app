@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { AppButton, Card, EmptyState, SectionTitle, StatTile } from '@/components/ui';
@@ -12,6 +12,7 @@ import {
   nextWeight,
   projectCycleEnd,
 } from '@/lib/bilbo';
+import { confirmAction } from '@/lib/confirm';
 import { exerciseName, formatDate, formatWeight } from '@/lib/format';
 import {
   selectActiveCycle,
@@ -22,18 +23,6 @@ import {
 import { Spacing } from '@/theme/colors';
 import { useTheme } from '@/theme/ThemeContext';
 import type { Cycle, Session } from '@/types/models';
-
-function confirmAction(title: string, message: string, onConfirm: () => void, confirmLabel: string) {
-  if (Platform.OS === 'web') {
-    // RN-web Alert has no buttons support
-    if (globalThis.confirm?.(message)) onConfirm();
-    return;
-  }
-  Alert.alert(title, message, [
-    { style: 'cancel', text: '✕' },
-    { style: 'destructive', text: confirmLabel, onPress: onConfirm },
-  ]);
-}
 
 function ProjectionCard({ cycle, sessions }: { cycle: Cycle; sessions: Session[] }) {
   const { colors } = useTheme();

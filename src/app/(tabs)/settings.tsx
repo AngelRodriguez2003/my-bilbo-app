@@ -3,6 +3,7 @@ import { Link } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
+import { BackupCard } from '@/components/BackupCard';
 import { Card, Field, SectionTitle, SegmentedControl } from '@/components/ui';
 import { parseDecimal } from '@/lib/format';
 import { useAuthStore } from '@/store/auth';
@@ -80,6 +81,8 @@ export default function SettingsScreen() {
           }}
         />
       </Card>
+
+      <BackupCard />
 
       <Card>
         <SectionTitle>{t('settings.account')}</SectionTitle>

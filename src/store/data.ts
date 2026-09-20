@@ -2,8 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import type { BackupData, ImportMode } from '@/lib/backup';
 import { mergeById } from '@/lib/merge';
-import type { Cycle, Exercise, Session, Unit } from '@/types/models';
+import type { Cycle, Exercise, Session, SyncedRecord, Unit } from '@/types/models';
 
 function newId(): string {
   // crypto.randomUUID is available in Hermes / RN 0.86+
@@ -49,6 +50,11 @@ interface DataState {
   }) => void;
   /** Vacía los datos locales: solo al entrar con una cuenta distinta. */
   resetLocal: () => void;
+
+  /** Todo lo que necesita una copia de seguridad local. */
+  exportData: () => BackupData;
+  /** Restaura una copia: `merge` conserva lo más reciente, `replace` la impone. */
+  importData: (data: BackupData, mode: ImportMode) => void;
 }
 
 const SEED_EXERCISES: Array<{ i18nKey: string; fallbackName: string }> = [
@@ -222,6 +228,28 @@ export const useDataStore = create<DataState>()(
       resetLocal: () => {
         set({ exercises: {}, cycles: {}, sessions: {}, seeded: false });
       },
+
+      exportData: () => {
+        const { exercises, cycles, sessions } = get();
+        return { exercises, cycles, sessions };
+      },
+
+      importData: (data, mode) => {
+        // Sellar con la hora de ahora es lo que hace que una restauración
+        // valga también contra la nube: los registros del archivo traen
+        // fechas viejas y, sin esto, el last-write-wins del sync los
+        // descartaría en cuanto el dispositivo volviera a sincronizar.
+        const stamp = now();
+        const apply = mode === 'replace' ? restoreRecords : adoptRecords;
+        set((s) => ({
+          exercises: apply(s.exercises, data.exercises, stamp),
+          cycles: apply(s.cycles, data.cycles, stamp),
+          sessions: apply(s.sessions, data.sessions, stamp),
+          // La copia ya trae los ejercicios: sembrar los de ejemplo encima
+          // duplicaría la lista.
+          seeded: true,
+        }));
+      },
     }),
     {
       name: 'bilbo-data',
@@ -232,6 +260,46 @@ export const useDataStore = create<DataState>()(
     },
   ),
 );
+
+/**
+ * Copia combinada: gana el más reciente por `updatedAt` (igual que la nube) y
+ * los que entran se re-sellan con `stamp` para que suban en la próxima pasada.
+ */
+function adoptRecords<T extends SyncedRecord>(
+  local: Record<string, T>,
+  incoming: Record<string, T>,
+  stamp: string,
+): Record<string, T> {
+  const merged = mergeById(local, Object.values(incoming));
+  if (merged === local) return local;
+
+  for (const [id, record] of Object.entries(incoming)) {
+    // Identidad, no igualdad: mergeById deja el objeto entrante tal cual
+    // cuando gana, así que esto marca exactamente los que se han adoptado.
+    if (merged[id] === record) merged[id] = { ...record, updatedAt: stamp };
+  }
+  return merged;
+}
+
+/**
+ * Copia que reemplaza: el dispositivo queda con lo del archivo y nada más.
+ * Lo local que no está en la copia se marca como borrado en vez de
+ * desaparecer, que es lo único que la nube sabe propagar a otros dispositivos.
+ */
+function restoreRecords<T extends SyncedRecord>(
+  local: Record<string, T>,
+  incoming: Record<string, T>,
+  stamp: string,
+): Record<string, T> {
+  const out: Record<string, T> = {};
+  for (const [id, record] of Object.entries(local)) {
+    if (!incoming[id]) out[id] = { ...record, deleted: true, updatedAt: stamp };
+  }
+  for (const [id, record] of Object.entries(incoming)) {
+    out[id] = { ...record, updatedAt: stamp };
+  }
+  return out;
+}
 
 // ---- Selectors (avoid recomputing in components) ----
 

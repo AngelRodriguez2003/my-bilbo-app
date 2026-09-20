@@ -74,3 +74,67 @@ describe('mergeRemote', () => {
     unsubscribe();
   });
 });
+
+describe('importData', () => {
+  const backup = (updatedAt: string) => ({
+    exercises: { a: exercise('a', updatedAt) },
+    cycles: {},
+    sessions: {},
+  });
+
+  beforeEach(() => {
+    useDataStore.setState({ exercises: {}, cycles: {}, sessions: {}, seeded: false });
+  });
+
+  it('merge keeps the most recent record', () => {
+    useDataStore.setState({ exercises: { a: exercise('a', '2026-01-05T00:00:00.000Z') } });
+    useDataStore.getState().importData(backup('2026-01-01T00:00:00.000Z'), 'merge');
+
+    // La copia es más vieja: el registro local se queda como estaba.
+    expect(useDataStore.getState().exercises.a.updatedAt).toBe('2026-01-05T00:00:00.000Z');
+  });
+
+  /**
+   * Los registros del archivo traen fechas viejas. Sin volver a sellarlos,
+   * el cursor de subida los daría por ya sincronizados y nunca llegarían a
+   * la nube: una restauración que se pierde en el siguiente arranque.
+   */
+  it('re-stamps the records it adopts so the sync uploads them', () => {
+    const before = new Date().toISOString();
+    useDataStore.getState().importData(backup('2020-01-01T00:00:00.000Z'), 'merge');
+
+    expect(useDataStore.getState().exercises.a.updatedAt >= before).toBe(true);
+  });
+
+  it('replace soft-deletes what the backup does not contain', () => {
+    useDataStore.setState({ exercises: { a: exercise('a', '2026-01-01T00:00:00.000Z') } });
+    useDataStore.getState().importData(
+      { exercises: { b: exercise('b', '2026-01-01T00:00:00.000Z') }, cycles: {}, sessions: {} },
+      'replace',
+    );
+
+    const { exercises } = useDataStore.getState();
+    // Borrado lógico, no desaparición: es lo único que la nube propaga.
+    expect(exercises.a.deleted).toBe(true);
+    expect(exercises.b.deleted).toBe(false);
+  });
+
+  it('marks the store as seeded so the sample exercises are not re-added', () => {
+    useDataStore.getState().importData(backup('2026-01-01T00:00:00.000Z'), 'merge');
+
+    expect(useDataStore.getState().seeded).toBe(true);
+    useDataStore.getState().seedDefaults();
+    expect(Object.keys(useDataStore.getState().exercises)).toEqual(['a']);
+  });
+});
+
+describe('exportData', () => {
+  it('returns every record, including the soft-deleted ones', () => {
+    const deleted = { ...exercise('gone', '2026-01-01T00:00:00.000Z'), deleted: true };
+    useDataStore.setState({ exercises: { gone: deleted }, cycles: {}, sessions: {} });
+
+    // Las lápidas viajan en la copia: sin ellas, restaurar resucitaría
+    // ejercicios que el usuario ya había borrado.
+    expect(Object.keys(useDataStore.getState().exportData().exercises)).toEqual(['gone']);
+  });
+});
