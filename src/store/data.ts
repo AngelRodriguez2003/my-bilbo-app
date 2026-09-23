@@ -27,7 +27,8 @@ interface DataState {
   seeded: boolean;
 
   seedDefaults: () => void;
-  addExercise: (name: string) => Exercise;
+  /** `catalogId` solo si se eligió del catálogo; escrito a mano no lleva. */
+  addExercise: (name: string, catalogId?: string) => Exercise;
   removeExercise: (id: string) => void;
 
   startCycle: (input: {
@@ -96,10 +97,13 @@ export const useDataStore = create<DataState>()(
         set({ exercises, seeded: true });
       },
 
-      addExercise: (name) => {
+      addExercise: (name, catalogId) => {
         const exercise: Exercise = {
           id: newId(),
           name: name.trim(),
+          catalogId,
+          // Del catálogo o no, lo ha añadido el usuario: cuenta como suyo
+          // (isCustom distingue lo propio de los ejemplos sembrados).
           isCustom: true,
           createdAt: now(),
           updatedAt: now(),

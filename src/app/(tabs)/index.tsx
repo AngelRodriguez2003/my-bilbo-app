@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Text, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
+import { ExerciseThumb } from '@/components/ExerciseThumb';
 import {
   AppButton,
   Card,
@@ -12,7 +12,6 @@ import {
   CONTENT_MAX,
   EmptyState,
   Enter,
-  Field,
   Glow,
   IconButton,
   PressableScale,
@@ -21,6 +20,7 @@ import {
   StatusDot,
 } from '@/components/ui';
 import { cycleProgress } from '@/lib/bilbo';
+import { catalogIdOf } from '@/lib/catalog';
 import { confirmAction } from '@/lib/confirm';
 import { exerciseName, formatWeight } from '@/lib/format';
 import { useHydrated } from '@/lib/useHydrated';
@@ -38,6 +38,7 @@ import type { Exercise } from '@/types/models';
 /** Lado del botón de borrar y ancho del galón: la fila les reserva su hueco. */
 const ACTION_SIZE = 32;
 const CHEVRON_SIZE = 17;
+const THUMB_SIZE = 56;
 
 function ExerciseRow({ exercise, index }: { exercise: Exercise; index: number }) {
   const { colors } = useTheme();
@@ -72,43 +73,64 @@ function ExerciseRow({ exercise, index }: { exercise: Exercise; index: number })
           onPress={() => router.push(`/exercise/${exercise.id}`)}
           accessibilityLabel={exerciseName(exercise, t)}
           scaleTo={0.985}>
-          <Card style={{ gap: Spacing.sm }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: Spacing.sm,
-                minHeight: ACTION_SIZE,
-              }}>
-              {activeCycle ? <StatusDot color={colors.success} pulsing /> : null}
-              <Text style={[Type.heading, { color: colors.text, flex: 1 }]} numberOfLines={1}>
-                {exerciseName(exercise, t)}
-              </Text>
-              <View style={{ width: ACTION_SIZE }} />
-              <Ionicons name="chevron-forward" size={CHEVRON_SIZE} color={colors.textMuted} />
-            </View>
+          <Card style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md }}>
+            <ExerciseThumb catalogId={catalogIdOf(exercise)} size={THUMB_SIZE} />
 
-            <Text
-              style={[Type.small, { color: activeCycle ? colors.textSecondary : colors.textMuted }]}>
-              {activeCycle
-                ? lastSession
-                  ? t('exercises.lastSession', {
-                      weight: formatWeight(lastSession.weight),
-                      unit: t(`common.${activeCycle.unit}`),
-                      reps: lastSession.reps,
-                    })
-                  : t('exercises.activeCycle')
-                : t('exercises.noActiveCycle')}
-            </Text>
-
-            {activeCycle && sessions.length > 0 ? (
-              <View style={{ gap: 6 }}>
-                <ProgressTrack value={progress} />
-                <Text style={[Type.caption, { color: colors.textMuted }]}>
-                  {t('exercises.sessionsCount', { count: sessions.length })}
+            <View style={{ flex: 1, gap: Spacing.sm }}>
+              {/* Los nombres del catálogo son largos («Barbell Bench Press -
+                  Medium Grip») y con la foto al lado no caben en una línea:
+                  se permiten dos. Punto y galón van en cajas del alto del
+                  botón de borrar para quedar a la altura de la PRIMERA línea,
+                  que es donde está el botón. */}
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm }}>
+                {activeCycle ? (
+                  <View style={{ height: ACTION_SIZE, justifyContent: 'center' }}>
+                    <StatusDot color={colors.success} pulsing />
+                  </View>
+                ) : null}
+                <Text
+                  style={[
+                    Type.heading,
+                    {
+                      color: colors.text,
+                      flex: 1,
+                      paddingVertical: (ACTION_SIZE - Type.heading.lineHeight) / 2,
+                    },
+                  ]}
+                  numberOfLines={2}>
+                  {exerciseName(exercise, t)}
                 </Text>
+                <View style={{ width: ACTION_SIZE }} />
+                <View style={{ height: ACTION_SIZE, justifyContent: 'center' }}>
+                  <Ionicons name="chevron-forward" size={CHEVRON_SIZE} color={colors.textMuted} />
+                </View>
               </View>
-            ) : null}
+
+              <Text
+                style={[
+                  Type.small,
+                  { color: activeCycle ? colors.textSecondary : colors.textMuted },
+                ]}>
+                {activeCycle
+                  ? lastSession
+                    ? t('exercises.lastSession', {
+                        weight: formatWeight(lastSession.weight),
+                        unit: t(`common.${activeCycle.unit}`),
+                        reps: lastSession.reps,
+                      })
+                    : t('exercises.activeCycle')
+                  : t('exercises.noActiveCycle')}
+              </Text>
+
+              {activeCycle && sessions.length > 0 ? (
+                <View style={{ gap: 6 }}>
+                  <ProgressTrack value={progress} />
+                  <Text style={[Type.caption, { color: colors.textMuted }]}>
+                    {t('exercises.sessionsCount', { count: sessions.length })}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           </Card>
         </PressableScale>
 
@@ -162,58 +184,9 @@ function ListHeader({ exercises }: { exercises: Exercise[] }) {
 export default function ExercisesScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const router = useRouter();
   const hydrated = useHydrated(useDataStore);
   const exercises = useDataStore(useShallow(selectVisibleExercises));
-  const addExercise = useDataStore((s) => s.addExercise);
-
-  const [adding, setAdding] = useState(false);
-  const [name, setName] = useState('');
-
-  const submitNew = () => {
-    if (!name.trim()) return;
-    addExercise(name);
-    setName('');
-    setAdding(false);
-  };
-
-  // Sin <Enter>: el campo lleva autoFocus y la animación de entrada lo dejaría
-  // sin foco (y sin teclado) justo cuando el usuario va a escribir.
-  const addForm = adding ? (
-    <Card style={{ gap: Spacing.md }} level={2}>
-      <Field
-        label={t('exercises.exerciseName')}
-        value={name}
-        onChangeText={setName}
-        autoFocus
-        onSubmitEditing={submitNew}
-        returnKeyType="done"
-      />
-      <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-        <AppButton
-          label={t('common.cancel')}
-          variant="secondary"
-          onPress={() => {
-            setName('');
-            setAdding(false);
-          }}
-          style={{ flex: 1 }}
-        />
-        <AppButton
-          label={t('common.add')}
-          onPress={submitNew}
-          disabled={!name.trim()}
-          style={{ flex: 1 }}
-        />
-      </View>
-    </Card>
-  ) : (
-    <AppButton
-      label={t('exercises.addExercise')}
-      icon="add"
-      variant="secondary"
-      onPress={() => setAdding(true)}
-    />
-  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -239,7 +212,14 @@ export default function ExercisesScreen() {
             />
           }
           ListFooterComponent={
-            <View style={{ marginTop: Spacing.md }}>{addForm}</View>
+            <View style={{ marginTop: Spacing.md }}>
+              <AppButton
+                label={t('exercises.addExercise')}
+                icon="add"
+                variant="secondary"
+                onPress={() => router.push('/exercise/new')}
+              />
+            </View>
           }
         />
       ) : (

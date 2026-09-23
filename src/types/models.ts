@@ -13,6 +13,8 @@ export interface Exercise extends SyncedRecord {
   name: string;
   /** i18n key for seeded exercises; custom exercises use `name` directly. */
   i18nKey?: string;
+  /** Entrada del catálogo (src/lib/catalog.ts) de la que sale su foto. */
+  catalogId?: string;
   isCustom: boolean;
   createdAt: string;
 }

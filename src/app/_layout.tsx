@@ -88,6 +88,10 @@ function RootStack({ fontsReady }: { fontsReady: boolean }) {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="exercise/[id]" options={{ title: '' }} />
           <Stack.Screen
+            name="exercise/new"
+            options={{ title: t('exercises.addExercise'), presentation: 'modal' }}
+          />
+          <Stack.Screen
             name="cycle/new"
             options={{ title: t('cycle.newCycle'), presentation: 'modal' }}
           />
