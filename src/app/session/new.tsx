@@ -1,14 +1,15 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
-import { AppButton, Card, Field } from '@/components/ui';
+import { AppButton, Card, Chip, Enter, Field, Screen } from '@/components/ui';
 import { nextWeight } from '@/lib/bilbo';
 import { formatWeight, parseDecimal } from '@/lib/format';
 import { selectCycleSessions, useDataStore } from '@/store/data';
 import { Spacing } from '@/theme/colors';
+import { Type } from '@/theme/typography';
 import { useTheme } from '@/theme/ThemeContext';
 
 export default function NewSessionScreen() {
@@ -49,18 +50,29 @@ export default function NewSessionScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: Spacing.md, gap: Spacing.md }}>
-      <Card style={{ gap: Spacing.md }}>
-        <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-          {t('session.sessionNumber', { index: sessions.length + 1 })}
-          {' · '}
-          {t('session.suggestedWeight')}: {formatWeight(suggested)} {unitLabel}
-        </Text>
+    <Screen>
+      {/* Sin <Enter>: dentro va el campo con autoFocus y la animación de
+          entrada se lo lleva por delante. */}
+      <Card level={2} style={{ gap: Spacing.md }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: Spacing.sm,
+          }}>
+          <Chip label={t('session.sessionNumber', { index: sessions.length + 1 })} tone="accent" />
+          <Text style={[Type.caption, { color: colors.textMuted }]}>
+            {t('session.suggestedWeight')}: {formatWeight(suggested)} {unitLabel}
+          </Text>
+        </View>
+
         <Field
           label={t('session.weight', { unit: unitLabel })}
           value={weightRaw}
           onChangeText={setWeightRaw}
           keyboardType="decimal-pad"
+          error={weightRaw.trim() !== '' && !weight ? t('common.invalidNumber') : undefined}
         />
         <Field
           label={t('session.reps')}
@@ -68,15 +80,23 @@ export default function NewSessionScreen() {
           onChangeText={setRepsRaw}
           keyboardType="number-pad"
           autoFocus
+          error={
+            repsRaw.trim() !== '' && (!reps || !Number.isInteger(reps))
+              ? t('common.invalidNumber')
+              : undefined
+          }
         />
-        <Field
-          label={t('session.notes')}
-          value={notes}
-          onChangeText={setNotes}
-          multiline
-        />
+        <Field label={t('session.notes')} value={notes} onChangeText={setNotes} multiline />
       </Card>
-      <AppButton label={t('session.save')} onPress={submit} disabled={!canSubmit} />
-    </ScrollView>
+
+      <Enter index={1}>
+        <AppButton
+          label={t('session.save')}
+          icon="checkmark"
+          onPress={submit}
+          disabled={!canSubmit}
+        />
+      </Enter>
+    </Screen>
   );
 }

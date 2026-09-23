@@ -16,7 +16,12 @@
     "lastSession": "Last: {{weight}} {{unit}} × {{reps}}",
     "sessionsCount": "{{count}} sessions",
     "deleteExercise": "Delete exercise",
-    "deleteExerciseConfirm": "Delete this exercise and all its history?"
+    "deleteExerciseConfirm": "Delete this exercise and all its history?",
+    "emptyTitle": "Start here",
+    "emptyBody": "Add the lift you are going to train and start its first cycle.",
+    "activeCount_one": "{{count}} cycle running",
+    "activeCount_other": "{{count}} cycles running",
+    "noneActive": "No cycle running"
   },
   "cycle": {
     "newCycle": "New cycle",
@@ -40,7 +45,12 @@
     "history": "Cycle history",
     "startedOn": "Started: {{date}}",
     "endedOn": "Ended: {{date}}",
-    "cycleEndNear": "You're close to the end of the cycle! Once you hit ~15 reps, close it and start a new one with more weight."
+    "cycleEndNear": "You're close to the end of the cycle! Once you hit ~15 reps, close it and start a new one with more weight.",
+    "progressTitle": "Cycle progress",
+    "progressFromTo": "{{from}} → {{to}} {{unit}}",
+    "noActiveCycleTitle": "No cycle running",
+    "noActiveCycleBody": "A cycle starts at 50% of your 1RM and adds weight every session, until the set drops to ~15 reps.",
+    "cycleEndNearTitle": "Cycle end in sight"
   },
   "session": {
     "logSession": "Log session",
@@ -51,7 +61,10 @@
     "sessionNumber": "Session {{index}}",
     "suggestedWeight": "Suggested weight",
     "deleteSession": "Delete session",
-    "deleteSessionConfirm": "Delete this session?"
+    "deleteSessionConfirm": "Delete this session?",
+    "nextSet": "Your next set",
+    "emptyTitle": "No sessions yet",
+    "emptyBody": "Log the first explosive set of this cycle."
   },
   "projection": {
     "title": "Projection",
@@ -71,7 +84,11 @@
     "noData": "No sessions logged yet",
     "currentCycle": "Current cycle",
     "repsPerSession": "Reps per session",
-    "weightPerSession": "Weight per session"
+    "weightPerSession": "Weight per session",
+    "emptyTitle": "Nothing to chart yet",
+    "cycleEndTarget": "cycle end",
+    "bestSet": "Best set",
+    "sessions": "Sessions"
   },
   "settings": {
     "title": "Settings",

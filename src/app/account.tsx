@@ -1,17 +1,28 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { AppButton, Card, Field, SectionTitle } from '@/components/ui';
+import {
+  AppButton,
+  Card,
+  Enter,
+  Field,
+  Screen,
+  SectionTitle,
+  Skeleton,
+  StatusDot,
+} from '@/components/ui';
 import { formatDateTime } from '@/lib/format';
 import { isSupabaseConfigured, NETWORK_ERROR } from '@/lib/supabase';
 import { SIGN_OUT_PENDING, useAuthStore, type AuthStatus } from '@/store/auth';
 import { useDataStore } from '@/store/data';
 import { useSettingsStore } from '@/store/settings';
 import { countPendingChanges, useSyncStore } from '@/store/sync';
-import { Spacing } from '@/theme/colors';
+import { Radius, Spacing } from '@/theme/colors';
+import { MEASURE, Type } from '@/theme/typography';
 import { useTheme } from '@/theme/ThemeContext';
 
 const MIN_PASSWORD = 6;
@@ -46,9 +57,7 @@ function DoneButton() {
       onPress={dismiss}
       hitSlop={12}
       style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, paddingHorizontal: Spacing.sm })}>
-      <Text style={{ color: colors.accent, fontSize: 16, fontWeight: '600' }}>
-        {t('common.done')}
-      </Text>
+      <Text style={[Type.button, { color: colors.accent }]}>{t('common.done')}</Text>
     </Pressable>
   );
 }
@@ -87,33 +96,42 @@ export default function AccountScreen() {
 
   if (!isSupabaseConfigured) {
     return (
-      <ScrollView contentContainerStyle={{ padding: Spacing.md, gap: Spacing.md }}>
+      <Screen>
         {header}
-        <Card style={{ gap: Spacing.sm }}>
-          <SectionTitle>{t('account.title')}</SectionTitle>
-          <Text style={{ color: colors.text, fontSize: 14 }}>{t('account.notConfigured')}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 13, lineHeight: 19 }}>
-            {t('account.notConfiguredHint')}
-          </Text>
-        </Card>
-      </ScrollView>
+        <Enter>
+          <Card style={{ gap: Spacing.sm }}>
+            <SectionTitle>{t('account.title')}</SectionTitle>
+            <Text style={[Type.body, { color: colors.text }]}>{t('account.notConfigured')}</Text>
+            <Text style={[Type.small, { color: colors.textMuted, maxWidth: MEASURE }]}>
+              {t('account.notConfiguredHint')}
+            </Text>
+          </Card>
+        </Enter>
+      </Screen>
     );
   }
 
+  // Mientras se restaura la sesión, el esqueleto de la tarjeta que va a
+  // aparecer: se ve dónde va a caer el contenido en vez de una ruleta suelta.
   if (status === 'loading') {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <Screen>
         {header}
-        <ActivityIndicator color={colors.accent} />
-      </View>
+        <Card style={{ gap: Spacing.md }}>
+          <Skeleton width="45%" height={19} />
+          <Skeleton height={13} />
+          <Skeleton width="70%" height={13} />
+          <Skeleton height={48} radius={Radius.md} />
+        </Card>
+      </Screen>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: Spacing.md, gap: Spacing.md }}>
+    <Screen>
       {header}
       {status === 'signedIn' ? <SignedIn locale={i18n.language} /> : <SignInForm />}
-    </ScrollView>
+    </Screen>
   );
 }
 
@@ -134,63 +152,77 @@ function SignInForm() {
 
   return (
     <>
-      <Card style={{ gap: Spacing.md }}>
-        <SectionTitle>{t('account.title')}</SectionTitle>
-        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>
-          {t('account.intro')}
-        </Text>
-
-        <Field
-          label={t('account.email')}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
-          inputMode="email"
-        />
-        <Field
-          label={t('account.password')}
-          value={password}
-          onChangeText={setPassword}
-          autoCapitalize="none"
-          autoComplete="current-password"
-          secureTextEntry
-        />
-        <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: -Spacing.sm }}>
-          {t('account.passwordHint')}
-        </Text>
-
-        {error ? (
-          <Text style={{ color: colors.danger, fontSize: 13, lineHeight: 19 }}>
-            {humanError(error, t)}
+      <Enter index={0}>
+        <Card level={2} style={{ gap: Spacing.md }}>
+          <SectionTitle>{t('account.title')}</SectionTitle>
+          <Text style={[Type.small, { color: colors.textSecondary, maxWidth: MEASURE }]}>
+            {t('account.intro')}
           </Text>
-        ) : null}
-        {notice === 'confirmEmail' ? (
-          <Text style={{ color: colors.success, fontSize: 13, lineHeight: 19 }}>
-            {t('account.confirmEmail')}
+
+          <Field
+            label={t('account.email')}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            inputMode="email"
+          />
+          <Field
+            label={t('account.password')}
+            value={password}
+            onChangeText={setPassword}
+            autoCapitalize="none"
+            autoComplete="current-password"
+            secureTextEntry
+            hint={t('account.passwordHint')}
+          />
+
+          {error ? <Notice tone="danger" text={humanError(error, t) ?? ''} /> : null}
+          {notice === 'confirmEmail' ? (
+            <Notice tone="success" text={t('account.confirmEmail')} />
+          ) : null}
+
+          <AppButton
+            label={t('account.signIn')}
+            onPress={() => signIn(email, password)}
+            disabled={!valid}
+            loading={busy}
+          />
+          <AppButton
+            label={t('account.signUp')}
+            variant="secondary"
+            onPress={() => signUp(email, password)}
+            disabled={!valid || busy}
+          />
+        </Card>
+      </Enter>
+
+      <Enter index={1}>
+        <Card tone="sunken" level={0}>
+          <Text style={[Type.caption, { color: colors.textMuted, maxWidth: MEASURE }]}>
+            {t('account.otherAccountWarning')}
           </Text>
-        ) : null}
-
-        <AppButton
-          label={t('account.signIn')}
-          onPress={() => signIn(email, password)}
-          disabled={!valid || busy}
-        />
-        <AppButton
-          label={t('account.signUp')}
-          variant="secondary"
-          onPress={() => signUp(email, password)}
-          disabled={!valid || busy}
-        />
-      </Card>
-
-      <Card>
-        <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 18 }}>
-          {t('account.otherAccountWarning')}
-        </Text>
-      </Card>
+        </Card>
+      </Enter>
     </>
+  );
+}
+
+/** Mensaje en línea con su icono: el error nunca es solo texto rojo suelto. */
+function Notice({ tone, text }: { tone: 'danger' | 'success'; text: string }) {
+  const { colors } = useTheme();
+  const color = tone === 'danger' ? colors.danger : colors.success;
+  return (
+    <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-start' }}>
+      <Ionicons
+        name={tone === 'danger' ? 'alert-circle' : 'checkmark-circle'}
+        size={16}
+        color={color}
+        style={{ marginTop: 2 }}
+      />
+      <Text style={[Type.small, { color, flex: 1 }]}>{text}</Text>
+    </View>
   );
 }
 
@@ -230,73 +262,96 @@ function SignedIn({ locale }: { locale: string }) {
 
   return (
     <>
-      <Card style={{ gap: Spacing.sm }}>
-        <SectionTitle>{t('account.title')}</SectionTitle>
-        <Text style={{ color: colors.text, fontSize: 15 }}>
-          {t('account.signedInAs', { email })}
-        </Text>
-      </Card>
-
-      <Card style={{ gap: Spacing.md }}>
-        <SectionTitle>{t('account.sync')}</SectionTitle>
-
-        <View style={{ gap: 4 }}>
-          <Text style={{ color: statusLine.color, fontSize: 14, fontWeight: '600' }}>
-            {statusLine.text}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-            {lastSyncedAt
-              ? t('account.lastSynced', { date: formatDateTime(lastSyncedAt, locale) })
-              : t('account.neverSynced')}
-          </Text>
-          {syncError ? (
-            <Text style={{ color: colors.danger, fontSize: 12, lineHeight: 18 }}>
-              {humanError(syncError, t)}
+      <Enter index={0}>
+        <Card level={2} style={{ gap: Spacing.md }}>
+          <SectionTitle>{t('account.title')}</SectionTitle>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: Radius.md,
+                backgroundColor: colors.accentSoft,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Ionicons name="person" size={19} color={colors.accent} />
+            </View>
+            <Text style={[Type.bodyStrong, { color: colors.text, flex: 1 }]} numberOfLines={2}>
+              {t('account.signedInAs', { email })}
             </Text>
-          ) : null}
-        </View>
+          </View>
+        </Card>
+      </Enter>
 
-        <AppButton
-          label={t('account.syncNow')}
-          onPress={() => void syncNow()}
-          disabled={syncStatus === 'syncing'}
-        />
+      <Enter index={1}>
+        <Card style={{ gap: Spacing.md }}>
+          <SectionTitle>{t('account.sync')}</SectionTitle>
 
-        <View style={{ gap: 6 }}>
+          <View style={{ gap: 5 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <StatusDot color={statusLine.color} pulsing={syncStatus === 'syncing'} />
+              <Text style={[Type.bodyStrong, { color: statusLine.color, flex: 1 }]}>
+                {statusLine.text}
+              </Text>
+            </View>
+            <Text style={[Type.caption, { color: colors.textMuted }]}>
+              {lastSyncedAt
+                ? t('account.lastSynced', { date: formatDateTime(lastSyncedAt, locale) })
+                : t('account.neverSynced')}
+            </Text>
+            {syncError ? <Notice tone="danger" text={humanError(syncError, t) ?? ''} /> : null}
+          </View>
+
           <AppButton
-            label={t('account.fullSync')}
-            variant="secondary"
-            onPress={() => void syncNow({ full: true })}
-            disabled={syncStatus === 'syncing'}
+            label={t('account.syncNow')}
+            icon="sync"
+            onPress={() => void syncNow()}
+            loading={syncStatus === 'syncing'}
           />
-          <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 18 }}>
-            {t('account.fullSyncHint')}
+
+          <View style={{ gap: Spacing.sm }}>
+            <AppButton
+              label={t('account.fullSync')}
+              variant="secondary"
+              onPress={() => void syncNow({ full: true })}
+              disabled={syncStatus === 'syncing'}
+            />
+            <Text style={[Type.caption, { color: colors.textMuted, maxWidth: MEASURE }]}>
+              {t('account.fullSyncHint')}
+            </Text>
+          </View>
+
+          <Text style={[Type.caption, { color: colors.textMuted, maxWidth: MEASURE }]}>
+            {t('account.offlineHint')}
+          </Text>
+        </Card>
+      </Enter>
+
+      <Enter index={2}>
+        <View style={{ gap: Spacing.sm }}>
+          {authError ? (
+            <Notice
+              tone="danger"
+              text={
+                authError === SIGN_OUT_PENDING
+                  ? t('account.signOutPending', { count: pending })
+                  : (humanError(authError, t) ?? '')
+              }
+            />
+          ) : null}
+          <AppButton
+            label={t('account.signOut')}
+            variant="danger"
+            icon="log-out-outline"
+            onPress={() => void signOut()}
+            loading={busy}
+          />
+          <Text style={[Type.caption, { color: colors.textMuted, maxWidth: MEASURE }]}>
+            {t('account.signOutHint')}
           </Text>
         </View>
-
-        <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 18 }}>
-          {t('account.offlineHint')}
-        </Text>
-      </Card>
-
-      <View style={{ gap: Spacing.sm }}>
-        {authError ? (
-          <Text style={{ color: colors.danger, fontSize: 13, lineHeight: 19 }}>
-            {authError === SIGN_OUT_PENDING
-              ? t('account.signOutPending', { count: pending })
-              : humanError(authError, t)}
-          </Text>
-        ) : null}
-        <AppButton
-          label={t('account.signOut')}
-          variant="danger"
-          onPress={() => void signOut()}
-          disabled={busy}
-        />
-        <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 18 }}>
-          {t('account.signOutHint')}
-        </Text>
-      </View>
+      </Enter>
     </>
   );
 }

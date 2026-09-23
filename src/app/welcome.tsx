@@ -2,11 +2,13 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
+import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppButton } from '@/components/ui';
+import { AppButton, CONTENT_MAX, Enter, Glow } from '@/components/ui';
 import { useWelcomeStore } from '@/store/welcome';
-import { Spacing } from '@/theme/colors';
+import { elevation, Motion, Radius, Spacing } from '@/theme/colors';
+import { MEASURE, Type } from '@/theme/typography';
 import { useTheme } from '@/theme/ThemeContext';
 
 /**
@@ -22,50 +24,79 @@ export default function WelcomeScreen() {
   const dismiss = useWelcomeStore((s) => s.dismiss);
 
   return (
-    <ScrollView
-      contentContainerStyle={{
-        flexGrow: 1,
-        justifyContent: 'space-between',
-        padding: Spacing.lg,
-        paddingTop: insets.top + Spacing.xl,
-        paddingBottom: insets.bottom + Spacing.lg,
-        gap: Spacing.xl,
-      }}>
-      <View style={{ alignItems: 'center', gap: Spacing.md, marginTop: Spacing.xl }}>
-        {/* TODO: sustituir por el logo definitivo de la app. */}
-        <Image
-          source={require('../../assets/images/icon.png')}
-          style={{ width: 128, height: 128, borderRadius: 28 }}
-          accessibilityLabel={t('welcome.logoLabel')}
-        />
-        <Text style={{ color: colors.text, fontSize: 28, fontWeight: '700', textAlign: 'center' }}>
-          {t('welcome.title')}
-        </Text>
-        <Text
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Glow height={480} />
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: Spacing.gutter,
+          paddingTop: insets.top + Spacing.xl,
+          paddingBottom: insets.bottom + Spacing.lg,
+          gap: Spacing.xl,
+        }}>
+        <View
           style={{
-            color: colors.textSecondary,
-            fontSize: 15,
-            lineHeight: 22,
-            textAlign: 'center',
+            width: '100%',
+            maxWidth: CONTENT_MAX,
+            alignItems: 'center',
+            gap: Spacing.md,
+            marginTop: Spacing.xl,
           }}>
-          {t('welcome.body')}
-        </Text>
-      </View>
+          {/* La sombra va en el contenedor: la imagen se recorta a su radio. */}
+          <Animated.View
+            entering={ZoomIn.springify().damping(14).mass(0.9)}
+            style={[{ borderRadius: Radius.xl }, elevation(colors, 3)]}>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={{ width: 112, height: 112, borderRadius: Radius.xl }}
+              accessibilityLabel={t('welcome.logoLabel')}
+            />
+          </Animated.View>
 
-      <View style={{ gap: Spacing.sm }}>
-        <AppButton label={t('welcome.signIn')} onPress={() => router.push('/account')} />
-        <AppButton label={t('welcome.continueLocal')} variant="secondary" onPress={dismiss} />
-        <Text
-          style={{
-            color: colors.textMuted,
-            fontSize: 12,
-            lineHeight: 18,
-            textAlign: 'center',
-            marginTop: Spacing.xs,
-          }}>
-          {t('welcome.hint')}
-        </Text>
-      </View>
-    </ScrollView>
+          <Enter index={1}>
+            <Text style={[Type.display, { color: colors.text, textAlign: 'center' }]}>
+              {t('welcome.title')}
+            </Text>
+          </Enter>
+
+          <Enter index={2}>
+            <Text
+              style={[
+                Type.body,
+                { color: colors.textSecondary, textAlign: 'center', maxWidth: MEASURE },
+              ]}>
+              {t('welcome.body')}
+            </Text>
+          </Enter>
+        </View>
+
+        <View style={{ width: '100%', maxWidth: CONTENT_MAX, gap: Spacing.sm }}>
+          <Enter index={3}>
+            <AppButton
+              label={t('welcome.signIn')}
+              icon="cloud-upload-outline"
+              onPress={() => router.push('/account')}
+            />
+          </Enter>
+          <Enter index={4}>
+            <AppButton
+              label={t('welcome.continueLocal')}
+              variant="secondary"
+              onPress={dismiss}
+            />
+          </Enter>
+          <Animated.Text
+            entering={FadeIn.delay(5 * Motion.stagger).duration(Motion.slow)}
+            style={[
+              Type.caption,
+              { color: colors.textMuted, textAlign: 'center', marginTop: Spacing.xs },
+            ]}>
+            {t('welcome.hint')}
+          </Animated.Text>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
