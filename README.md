@@ -54,3 +54,10 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Créditos
+
+Exercise data by [RepDB](https://repdb.co) — el catálogo de ejercicios y sus
+imágenes salen del [dataset gratuito de RepDB](https://github.com/RepDB/exercise-dataset),
+cuya licencia pide esta atribución visible y prohíbe redistribuirlo como
+dataset. Se regenera con `node scripts/build-exercise-catalog.mjs`.

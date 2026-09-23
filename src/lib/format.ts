@@ -1,10 +1,17 @@
-import type { TFunction } from 'i18next';
+import i18next, { type TFunction } from 'i18next';
 
+import { catalogEntry, catalogName } from '@/lib/catalog';
 import type { Exercise } from '@/types/models';
 
-/** Seeded exercises are translated; custom ones keep the user's name. */
+/**
+ * Seeded exercises are translated; catalog ones use the catalog's own
+ * translation, so they follow the app language; custom ones keep the user's
+ * name. A catalog id that no longer exists falls back to the stored name.
+ */
 export function exerciseName(exercise: Exercise, t: TFunction): string {
-  return exercise.i18nKey ? t(exercise.i18nKey) : exercise.name;
+  if (exercise.i18nKey) return t(exercise.i18nKey);
+  const entry = catalogEntry(exercise.catalogId);
+  return entry ? catalogName(entry, i18next.language) : exercise.name;
 }
 
 /** Trim trailing zeros: 42.5 → "42.5", 40 → "40". */

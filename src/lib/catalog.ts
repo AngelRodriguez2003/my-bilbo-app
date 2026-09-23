@@ -1,54 +1,77 @@
 import rawCatalog from '@/data/exercise-catalog.json';
+import en from '@/i18n/locales/en.json';
+import es from '@/i18n/locales/es.json';
 import type { Exercise } from '@/types/models';
 
 /**
- * Catálogo de ejercicios con foto: Free Exercise DB
- * (https://github.com/yuhonas/free-exercise-db), dominio público (Unlicense).
+ * Catálogo de ejercicios con imagen: el dataset gratuito de RepDB
+ * (https://github.com/RepDB/exercise-dataset).
  *
- * Los datos viajan dentro de la app —unos 80 KB, generados por
- * scripts/build-exercise-catalog.mjs— y las fotos se piden al CDN solo cuando
- * se ven, así que la app no engorda con 1500 imágenes que casi nadie abrirá.
+ * Su licencia pide una atribución visible —«Exercise data by RepDB
+ * (repdb.co)», con enlace— y prohíbe redistribuirlo como dataset: está en el
+ * pie del selector y en el README, y el JSON es solo el recorte que usa la app.
+ *
+ * Los datos viajan dentro de la app —unos 125 KB, generados por
+ * scripts/build-exercise-catalog.mjs— y las imágenes se piden al CDN solo
+ * cuando se ven, así que la app no engorda con 900 imágenes que casi nadie
+ * abrirá.
  */
 
 export type Muscle =
-  | 'abdominals'
   | 'abductors'
   | 'adductors'
-  | 'biceps'
-  | 'calves'
-  | 'chest'
-  | 'forearms'
-  | 'glutes'
+  | 'anterior_deltoid'
+  | 'biceps_brachii'
+  | 'brachialis'
+  | 'brachioradialis'
+  | 'erector_spinae'
+  | 'forearm_extensors'
+  | 'forearm_flexors'
+  | 'gastrocnemius'
+  | 'gluteus_maximus'
+  | 'gluteus_medius'
   | 'hamstrings'
-  | 'lats'
-  | 'lower back'
-  | 'middle back'
-  | 'neck'
+  | 'hip_flexors'
+  | 'lateral_deltoid'
+  | 'latissimus_dorsi'
+  | 'obliques'
+  | 'pectoralis_major'
+  | 'posterior_deltoid'
+  | 'quadratus_lumborum'
   | 'quadriceps'
-  | 'shoulders'
-  | 'traps'
-  | 'triceps';
+  | 'rectus_abdominis'
+  | 'rhomboids'
+  | 'soleus'
+  | 'transverse_abdominis'
+  | 'trapezius'
+  | 'triceps_brachii';
 
-export type Equipment =
-  | 'bands'
-  | 'barbell'
-  | 'body only'
-  | 'cable'
-  | 'dumbbell'
-  | 'e-z curl bar'
-  | 'exercise ball'
-  | 'kettlebells'
-  | 'machine'
-  | 'medicine ball'
-  | 'other';
+type BodyPart =
+  | 'back'
+  | 'chest'
+  | 'core'
+  | 'full_body'
+  | 'lower_arms'
+  | 'lower_legs'
+  | 'shoulders'
+  | 'upper_arms'
+  | 'upper_legs';
 
 export interface CatalogExercise {
-  /** Id de Free Exercise DB; es también la carpeta de sus fotos. */
+  /** Id de RepDB, un slug estable (`bench-press`). */
   id: string;
-  /** Nombre original, en inglés: el dataset no trae traducciones. */
-  name: string;
+  name: { en: string; es: string };
+  /** Músculos principales, de más a menos implicado. */
   muscles: Muscle[];
-  equipment: Equipment | null;
+  bodyPart: BodyPart;
+  /** Slug del material (`ez_bar`); null en ejercicios sin material. */
+  equipment: string | null;
+  /**
+   * Imágenes, sin ruta ni extensión: inicio y pico, o una sola pose en los
+   * ejercicios estáticos. OJO: variantes casi idénticas comparten imagen, así
+   * que el nombre del archivo no siempre coincide con el id.
+   */
+  images: string[];
 }
 
 export const CATALOG = rawCatalog as CatalogExercise[];
@@ -59,25 +82,31 @@ export function catalogEntry(id: string | undefined): CatalogExercise | undefine
   return id ? BY_ID.get(id) : undefined;
 }
 
-// ------------------------------------------------------------------- fotos
+/** Nombre en el idioma de la interfaz; el dataset no trae más que es y en. */
+export function catalogName(entry: CatalogExercise, language: string | undefined): string {
+  return language?.startsWith('es') ? entry.name.es : entry.name.en;
+}
 
-/** El mismo commit que fija el script: las rutas de las fotos no se mueven. */
-const COMMIT = 'a859101d633a01c4a1a920d6a8ce41dabba0705f';
-const MEDIA_BASE = `https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@${COMMIT}/exercises`;
+// ----------------------------------------------------------------- imágenes
 
-/** Cada ejercicio trae dos fotos: posición inicial (0) y final (1). */
-export function catalogImageUrl(id: string, frame: 0 | 1 = 0): string {
-  return `${MEDIA_BASE}/${encodeURIComponent(id)}/${frame}.jpg`;
+/** El mismo commit que fija el script: las rutas de las imágenes no se mueven. */
+const COMMIT = '9ed9357f09c7566ea0256c57ebd6374ebb8b575e';
+const MEDIA_BASE = `https://cdn.jsdelivr.net/gh/RepDB/exercise-dataset@${COMMIT}/images/flat`;
+
+/** Miniatura de un ejercicio del catálogo: su primera pose, 512 × 512. */
+export function catalogThumbUrl(id: string | undefined): string | undefined {
+  const image = catalogEntry(id)?.images[0];
+  return image ? `${MEDIA_BASE}/${image}.webp` : undefined;
 }
 
 /**
  * Los ejemplos se sembraron antes de que existiera el catálogo y sus registros
- * no llevan `catalogId`: su foto se resuelve por su id fijo, sin migrar nada.
+ * no llevan `catalogId`: su imagen se resuelve por su id fijo, sin migrar nada.
  */
 const SEED_CATALOG_IDS: Record<string, string> = {
-  'seed-bench-press': 'Barbell_Bench_Press_-_Medium_Grip',
-  'seed-lat-pulldown': 'Wide-Grip_Lat_Pulldown',
-  'seed-squat': 'Barbell_Squat',
+  'seed-bench-press': 'bench-press',
+  'seed-lat-pulldown': 'lat-pulldown',
+  'seed-squat': 'squat',
 };
 
 /** Entrada del catálogo de un ejercicio del usuario, si la tiene. */
@@ -87,90 +116,95 @@ export function catalogIdOf(exercise: Exercise): string | undefined {
 
 // ------------------------------------------------------------------ grupos
 
-export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'core';
+export type MuscleGroup = 'chest' | 'back' | 'shoulders' | 'arms' | 'legs' | 'core' | 'fullBody';
 
-/** 17 músculos son demasiados para filtrar con el pulgar: se agrupan en 6. */
-const GROUP_MUSCLES: Record<MuscleGroup, Muscle[]> = {
-  chest: ['chest'],
-  back: ['lats', 'middle back', 'lower back', 'traps'],
-  shoulders: ['shoulders', 'neck'],
-  arms: ['biceps', 'triceps', 'forearms'],
-  legs: ['quadriceps', 'hamstrings', 'glutes', 'calves', 'adductors', 'abductors'],
-  core: ['abdominals'],
+export const MUSCLE_GROUPS: MuscleGroup[] = [
+  'chest',
+  'back',
+  'shoulders',
+  'arms',
+  'legs',
+  'core',
+  'fullBody',
+];
+
+/** Las 9 zonas del dataset, en los grupos que se filtran con el pulgar. */
+const GROUP_OF: Record<BodyPart, MuscleGroup> = {
+  chest: 'chest',
+  back: 'back',
+  shoulders: 'shoulders',
+  upper_arms: 'arms',
+  lower_arms: 'arms',
+  upper_legs: 'legs',
+  lower_legs: 'legs',
+  core: 'core',
+  full_body: 'fullBody',
 };
-
-export const MUSCLE_GROUPS = Object.keys(GROUP_MUSCLES) as MuscleGroup[];
-
-function groupsOf(entry: CatalogExercise): MuscleGroup[] {
-  return MUSCLE_GROUPS.filter((group) =>
-    entry.muscles.some((muscle) => GROUP_MUSCLES[group].includes(muscle)),
-  );
-}
 
 // -------------------------------------------------------------- etiquetas
 
-/** `lower back` → `lowerBack`: las claves de i18n no llevan espacios. */
+/** `pectoralis_major` → `pectoralisMajor`: las claves de i18n van en camelCase. */
 const camel = (value: string) =>
   value.replace(/[^a-z]+([a-z])/g, (_, c: string) => c.toUpperCase());
 
 export const muscleLabelKey = (muscle: Muscle) => `catalog.muscles.${camel(muscle)}`;
-export const equipmentLabelKey = (equipment: Equipment) => `catalog.equipment.${camel(equipment)}`;
 export const groupLabelKey = (group: MuscleGroup) => `catalog.groups.${group}`;
 
 // -------------------------------------------------------------- búsqueda
 
 /**
  * Lo que más se entrena, en este orden: es lo que se ve antes de escribir
- * nada, y desempata los resultados. Sin esto la lista abriría por
- * «3/4 Sit-Up» y «Ab Crunch Machine».
+ * nada, y desempata los resultados. Sin esto la lista abriría por orden
+ * alfabético, con «Ab Wheel Rollout» y «Archer Pull Ups».
  */
 const POPULAR = [
-  'Barbell_Bench_Press_-_Medium_Grip',
-  'Barbell_Squat',
-  'Barbell_Deadlift',
-  'Standing_Military_Press',
-  'Bent_Over_Barbell_Row',
-  'Pullups',
-  'Wide-Grip_Lat_Pulldown',
-  'Dips_-_Triceps_Version',
-  'Incline_Dumbbell_Press',
-  'Romanian_Deadlift',
-  'Barbell_Hip_Thrust',
-  'Leg_Press',
-  'Seated_Cable_Rows',
-  'Seated_Dumbbell_Press',
-  'Side_Lateral_Raise',
-  'Barbell_Curl',
-  'Hammer_Curls',
-  'Triceps_Pushdown',
-  'EZ-Bar_Skullcrusher',
-  'Barbell_Lunge',
-  'Lying_Leg_Curls',
-  'Leg_Extensions',
-  'Standing_Calf_Raises',
-  'Face_Pull',
-  'Chin-Up',
-  'Front_Barbell_Squat',
-  'Dumbbell_Bench_Press',
-  'Close-Grip_Barbell_Bench_Press',
-  'Hanging_Leg_Raise',
-  'Cable_Crunch',
-  'One-Arm_Dumbbell_Row',
-  'Barbell_Incline_Bench_Press_-_Medium_Grip',
-  'Dumbbell_Flyes',
-  'Cable_Crossover',
-  'Goblet_Squat',
-  'Hack_Squat',
-  'Sumo_Deadlift',
-  'Arnold_Dumbbell_Press',
-  'Reverse_Flyes',
-  'Barbell_Shrug',
-  'Dumbbell_Lunges',
-  'Dumbbell_Alternate_Bicep_Curl',
-  'Upright_Barbell_Row',
-  'Good_Morning',
-  'Pushups',
-  'Plank',
+  'bench-press',
+  'squat',
+  'deadlift',
+  'ohp',
+  'barbell-row',
+  'pull-up',
+  'lat-pulldown',
+  'dips',
+  'incline-db-press',
+  'romanian-deadlift',
+  'hip-thrust',
+  'leg-press',
+  'seated-cable-row',
+  'seated-db-press',
+  'lateral-raise',
+  'barbell-curl',
+  'hammer-curl',
+  'tricep-pushdown',
+  'skull-crusher',
+  'barbell-lunge',
+  'leg-curl',
+  'leg-extension',
+  'standing-calf-raise',
+  'face-pull',
+  'chin-ups',
+  'front-squat',
+  'db-bench-press',
+  'close-grip-bench-press',
+  'hanging-leg-raise',
+  'cable-crunch',
+  'single-arm-db-row',
+  'incline-bench-press',
+  'db-fly',
+  'cable-fly',
+  'goblet-squat',
+  'hack-squat',
+  'sumo-deadlift',
+  'bulgarian-split-squat',
+  'arnold-press',
+  'dumbbell-reverse-fly',
+  'db-shrug',
+  'db-lunge',
+  'bicep-curl',
+  'upright-row',
+  'good-morning',
+  'push-up',
+  'plank',
 ];
 
 const POPULAR_RANK = new Map(POPULAR.map((id, rank) => [id, rank]));
@@ -192,162 +226,25 @@ export function normalize(text: string): string {
     .trim();
 }
 
-/**
- * Los nombres del catálogo están en inglés y la app se usa sobre todo en
- * español. En vez de traducir 736 nombres, se traduce la búsqueda: cada
- * término español se convierte en los términos ingleses que lo nombran.
- *
- * Todo va normalizado (sin tildes) y en singular: los plurales se resuelven
- * solos (`dominadas` → `dominada`).
- */
-const PHRASES: [string, string[]][] = [
-  ['jalon al pecho', ['pulldown']],
-  ['remo al menton', ['upright']],
-  ['press frances', ['skullcrusher', 'lying triceps', 'french']],
-  ['buenos dias', ['good morning']],
-  ['barra z', ['e z', 'ez']],
-  ['pesa rusa', ['kettlebell']],
-];
-
-const WORDS: Record<string, string[]> = {
-  sentadilla: ['squat'],
-  banca: ['bench'],
-  banco: ['bench'],
-  muerto: ['deadlift'],
-  rumano: ['romanian'],
-  dominada: ['pullup', 'pull up', 'chin up', 'chinup'],
-  jalon: ['pulldown'],
-  remo: ['row'],
-  militar: ['military', 'overhead', 'shoulder press'],
-  elevacion: ['raise'],
-  lateral: ['lateral'],
-  frontal: ['front'],
-  frente: ['front'],
-  fondo: ['dip'],
-  zancada: ['lunge'],
-  estocada: ['lunge'],
-  flexion: ['push up', 'pushup'],
-  plancha: ['plank'],
-  abdominal: ['abdominal', 'crunch', 'sit up'],
-  abdomen: ['abdominal', 'core'],
-  femoral: ['leg curl', 'hamstring'],
-  cuadriceps: ['quadriceps'],
-  gemelo: ['calf', 'calves'],
-  pantorrilla: ['calf', 'calves'],
-  pecho: ['chest'],
-  pectoral: ['chest'],
-  espalda: ['back', 'lats'],
-  dorsal: ['lats'],
-  hombro: ['shoulder'],
-  biceps: ['biceps', 'curl'],
-  triceps: ['triceps'],
-  antebrazo: ['forearm', 'wrist'],
-  gluteo: ['glute'],
-  trapecio: ['traps', 'shrug'],
-  encogimiento: ['shrug'],
-  lumbar: ['lower back', 'hyperextension'],
-  hiperextension: ['hyperextension'],
-  cuello: ['neck'],
-  aductor: ['adductor'],
-  abductor: ['abductor'],
-  pierna: ['leg'],
-  brazo: ['arm'],
-  barra: ['barbell', 'bar'],
-  mancuerna: ['dumbbell'],
-  polea: ['cable'],
-  maquina: ['machine', 'lever', 'smith'],
-  multipower: ['smith'],
-  banda: ['band'],
-  goma: ['band'],
-  elastico: ['band'],
-  corporal: ['body only', 'bodyweight'],
-  balon: ['ball'],
-  medicinal: ['medicine'],
-  fitball: ['exercise ball', 'stability ball'],
-  prensa: ['leg press'],
-  extension: ['extension'],
-  martillo: ['hammer'],
-  inclinado: ['incline'],
-  inclinada: ['incline'],
-  declinado: ['decline'],
-  declinada: ['decline'],
-  sentado: ['seated', 'sitting'],
-  sentada: ['seated', 'sitting'],
-  tumbado: ['lying'],
-  tumbada: ['lying'],
-  acostado: ['lying'],
-  pie: ['standing'],
-  agarre: ['grip'],
-  cerrado: ['close', 'narrow'],
-  estrecho: ['close', 'narrow'],
-  abierto: ['wide'],
-  ancho: ['wide'],
-  invertido: ['reverse'],
-  inverso: ['reverse'],
-  trasero: ['rear'],
-  posterior: ['rear', 'reverse'],
-  alterno: ['alternate', 'alternating'],
-  alternado: ['alternate', 'alternating'],
-  apertura: ['fly'],
-  cruce: ['crossover'],
-  pajaro: ['reverse fly', 'rear delt'],
-  patada: ['kickback'],
-  rompecraneo: ['skullcrusher'],
-  puente: ['bridge'],
-  arrancada: ['snatch'],
-  cargada: ['clean'],
-  envion: ['jerk'],
-  salto: ['jump'],
-  caja: ['box'],
-};
-
-/** «peso» sobra: todo aquí es con peso, y dejarlo exigiría la palabra en inglés. */
+/** Palabras que no distinguen nada: «press DE banca», «jalón AL pecho». */
 const STOPWORDS = new Set([
-  'a', 'al', 'con', 'de', 'del', 'el', 'en', 'la', 'las', 'los', 'para', 'peso', 'por', 'sobre',
-  'un', 'una', 'y',
+  'a', 'al', 'con', 'de', 'del', 'el', 'en', 'la', 'las', 'los', 'para', 'por', 'sobre', 'un',
+  'una', 'y', 'the', 'with', 'of', 'on',
 ]);
 
-/**
- * Alternativas de una palabra: ella misma, su traducción y —si ya lleva tres
- * letras— la de las palabras que empiezan por ella, para que la lista
- * responda mientras se escribe («sentadi» ya encuentra sentadillas).
- */
-function expandWord(word: string): string[] {
-  const alternatives = new Set([word]);
-  for (const [term, english] of Object.entries(WORDS)) {
-    const matches =
-      term === word ||
-      word === `${term}s` ||
-      word === `${term}es` ||
-      (word.length >= 3 && term.startsWith(word));
-    if (matches) for (const alternative of english) alternatives.add(alternative);
-  }
-  return [...alternatives];
-}
-
-/** Una búsqueda es una lista de términos; cada término, sus alternativas. */
-function parseQuery(query: string): string[][] {
-  let rest = ` ${normalize(query)} `;
-  const terms: string[][] = [];
-  for (const [phrase, english] of PHRASES) {
-    const needle = ` ${phrase} `;
-    if (!rest.includes(needle)) continue;
-    rest = rest.replace(needle, ' ');
-    terms.push(english);
-  }
-  for (const word of rest.split(' ')) {
-    if (!word || STOPWORDS.has(word)) continue;
-    terms.push(expandWord(word));
-  }
-  return terms;
-}
-
 interface Haystack {
-  /** Nombre normalizado, con un espacio delante para casar inicios de palabra. */
+  /** Nombres en los dos idiomas, con un espacio delante de cada palabra. */
   name: string;
-  /** Nombre + músculos + material + grupo. */
+  /** Nombres + músculos y grupo en los dos idiomas + material. */
   all: string;
-  groups: MuscleGroup[];
+  group: MuscleGroup;
+}
+
+/** Etiqueta de i18n en los dos idiomas: se busca igual con la app en inglés. */
+function bothLabels(key: string): string {
+  const read = (dict: object) =>
+    key.split('.').reduce<unknown>((node, part) => (node as Record<string, unknown>)?.[part], dict);
+  return `${read(es) ?? ''} ${read(en) ?? ''}`;
 }
 
 let haystacks: Map<string, Haystack> | null = null;
@@ -355,50 +252,78 @@ let haystacks: Map<string, Haystack> | null = null;
 function haystackOf(entry: CatalogExercise): Haystack {
   haystacks ??= new Map(
     CATALOG.map((item) => {
-      const groups = groupsOf(item);
-      const name = ` ${normalize(item.name)}`;
-      const extra = normalize([...item.muscles, item.equipment ?? '', ...groups].join(' '));
-      return [item.id, { name, all: `${name} ${extra}`, groups }];
+      const group = GROUP_OF[item.bodyPart];
+      const name = ` ${normalize(`${item.name.es} ${item.name.en}`)}`;
+      const extra = normalize(
+        [
+          ...item.muscles.map((muscle) => bothLabels(muscleLabelKey(muscle))),
+          bothLabels(groupLabelKey(group)),
+          item.equipment ?? '',
+        ].join(' '),
+      );
+      return [item.id, { name, all: `${name} ${extra}`, group }];
     }),
   );
   return haystacks.get(entry.id)!;
 }
 
 /**
- * Casa por inicio de palabra, no por subcadena: «row» encuentra «Seated
- * Cable Rows» pero no «Narrow Stance Squats».
+ * Formas de una palabra buscada: ella misma y, si parece un plural, su
+ * singular. Los nombres mezclan «Dominada» y «Dominadas Arquero», y quien
+ * escribe «dominadas» espera ver las dos.
  */
-const has = (text: string, alternatives: string[]) =>
-  alternatives.some((alternative) => text.includes(` ${alternative}`));
+function variants(word: string): string[] {
+  if (word.length < 5) return [word];
+  if (word.endsWith('es')) return [word, word.slice(0, -1), word.slice(0, -2)];
+  if (word.endsWith('s')) return [word, word.slice(0, -1)];
+  return [word];
+}
+
+/**
+ * Casa por inicio de palabra, no por subcadena: «remo» encuentra «Remo con
+ * barra» pero no «Extremo». Y funciona mientras se escribe: «sentadi» ya
+ * encuentra las sentadillas.
+ */
+const has = (text: string, forms: string[]) => forms.some((form) => text.includes(` ${form}`));
 
 const popularity = (entry: CatalogExercise) => POPULAR_RANK.get(entry.id) ?? POPULAR.length;
 
 /**
  * Busca en el catálogo. Sin texto devuelve el grupo entero, con lo más
- * entrenado primero. Con texto exige todos los términos y ordena poniendo
- * delante lo que los tiene en el nombre, luego lo popular y luego lo corto
- * (el nombre más corto suele ser la variante básica).
+ * entrenado primero y el resto por orden alfabético. Con texto exige todas las
+ * palabras y ordena poniendo delante lo que las tiene en el nombre, luego lo
+ * popular y luego lo corto (el nombre más corto suele ser la variante básica).
+ *
+ * @param language idioma de la interfaz: decide el orden alfabético y qué
+ *   nombre cuenta como «empieza por». Se busca siempre en los dos idiomas.
  */
 export function searchCatalog(
   query: string,
   group: MuscleGroup | 'all' = 'all',
+  language = 'en',
 ): CatalogExercise[] {
-  const terms = parseQuery(query);
+  const terms = normalize(query)
+    .split(' ')
+    .filter((word) => word && !STOPWORDS.has(word))
+    .map(variants);
   const pool =
-    group === 'all' ? CATALOG : CATALOG.filter((entry) => haystackOf(entry).groups.includes(group));
+    group === 'all' ? CATALOG : CATALOG.filter((entry) => haystackOf(entry).group === group);
+  const nameOf = (entry: CatalogExercise) => catalogName(entry, language);
 
   if (terms.length === 0) {
-    return [...pool].sort((a, b) => popularity(a) - popularity(b));
+    return [...pool].sort(
+      (a, b) => popularity(a) - popularity(b) || nameOf(a).localeCompare(nameOf(b), language),
+    );
   }
 
   const scored: { entry: CatalogExercise; score: number }[] = [];
   for (const entry of pool) {
     const haystack = haystackOf(entry);
-    if (!terms.every((alternatives) => has(haystack.all, alternatives))) continue;
+    if (!terms.every((term) => has(haystack.all, term))) continue;
     let score = 0;
-    if (terms.every((alternatives) => has(haystack.name, alternatives))) score += 4;
+    if (terms.every((term) => has(haystack.name, term))) score += 4;
     if (POPULAR_RANK.has(entry.id)) score += 2;
-    if (terms[0].some((alternative) => haystack.name.startsWith(` ${alternative}`))) score += 1;
+    if (terms[0].some((form) => normalize(nameOf(entry)).startsWith(form))) score += 1;
     scored.push({ entry, score });
   }
 
@@ -407,7 +332,7 @@ export function searchCatalog(
       (a, b) =>
         b.score - a.score ||
         popularity(a.entry) - popularity(b.entry) ||
-        a.entry.name.length - b.entry.name.length,
+        nameOf(a.entry).length - nameOf(b.entry).length,
     )
     .map(({ entry }) => entry);
 }

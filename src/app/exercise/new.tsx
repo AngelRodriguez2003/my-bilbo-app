@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
@@ -16,7 +17,7 @@ import {
 } from '@/components/ui';
 import {
   catalogIdOf,
-  equipmentLabelKey,
+  catalogName,
   groupLabelKey,
   MUSCLE_GROUPS,
   muscleLabelKey,
@@ -32,8 +33,10 @@ import { useTheme } from '@/theme/ThemeContext';
 type GroupFilter = MuscleGroup | 'all';
 
 const THUMB_SIZE = 60;
-/** Alto fijo de fila: deja a la lista calcular posiciones sin medir 736 filas. */
+/** Alto fijo de fila: deja a la lista calcular posiciones sin medir 509 filas. */
 const ROW_HEIGHT = THUMB_SIZE + Spacing.sm * 2 + 4;
+/** Destino de la atribución que exige la licencia de RepDB. */
+const REPDB_URL = 'https://repdb.co';
 
 function CatalogRow({
   entry,
@@ -45,19 +48,22 @@ function CatalogRow({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
-  const details = [
-    ...entry.muscles.map((muscle) => t(muscleLabelKey(muscle))),
-    ...(entry.equipment ? [t(equipmentLabelKey(entry.equipment))] : []),
-  ].join(' · ');
+  const name = catalogName(entry, i18n.language);
+  // Los dos músculos principales bastan; el material ya va en el nombre
+  // («Press de Banca con Barra»).
+  const details = entry.muscles
+    .slice(0, 2)
+    .map((muscle) => t(muscleLabelKey(muscle)))
+    .join(' · ');
 
   return (
     <PressableScale
       onPress={onPress}
       disabled={added}
       scaleTo={0.985}
-      accessibilityLabel={`${entry.name}, ${details}`}>
+      accessibilityLabel={`${name}, ${details}`}>
       <View
         style={{
           height: ROW_HEIGHT,
@@ -70,7 +76,7 @@ function CatalogRow({
         <ExerciseThumb catalogId={entry.id} size={THUMB_SIZE} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={[Type.bodyStrong, { color: colors.text }]} numberOfLines={2}>
-            {entry.name}
+            {name}
           </Text>
           <Text style={[Type.caption, { color: colors.textMuted }]} numberOfLines={1}>
             {details}
@@ -131,7 +137,7 @@ function CustomRow({ name, onPress }: { name: string; onPress: () => void }) {
 
 export default function NewExerciseScreen() {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const list = useRef<FlatList<CatalogExercise>>(null);
 
@@ -141,7 +147,10 @@ export default function NewExerciseScreen() {
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<GroupFilter>('all');
 
-  const results = useMemo(() => searchCatalog(query, group), [query, group]);
+  const results = useMemo(
+    () => searchCatalog(query, group, i18n.language),
+    [query, group, i18n.language],
+  );
   // Lo que ya está en la lista se marca en vez de ocultarse: si desapareciera,
   // parecería que el catálogo no lo tiene.
   const added = useMemo(() => new Set(exercises.map(catalogIdOf)), [exercises]);
@@ -155,7 +164,9 @@ export default function NewExerciseScreen() {
   };
 
   const pick = (entry: CatalogExercise) => {
-    addExercise(entry.name, entry.id);
+    // El nombre guardado es solo el respaldo: en pantalla manda el catálogo,
+    // que lo traduce al idioma de la app (ver exerciseName).
+    addExercise(catalogName(entry, i18n.language), entry.id);
     close();
   };
 
@@ -247,7 +258,20 @@ export default function NewExerciseScreen() {
           ListFooterComponent={
             <View style={{ gap: Spacing.md, paddingTop: Spacing.sm }}>
               {customName ? <CustomRow name={customName} onPress={createCustom} /> : null}
-              <Text style={[Type.caption, { color: colors.textMuted, textAlign: 'center' }]}>
+              {/* Atribución obligatoria de la licencia de RepDB: visible y con
+                  enlace. No se quita ni se esconde. */}
+              <Text
+                accessibilityRole="link"
+                accessibilityHint={t('catalog.creditLink')}
+                onPress={() => void WebBrowser.openBrowserAsync(REPDB_URL)}
+                style={[
+                  Type.caption,
+                  {
+                    color: colors.textMuted,
+                    textAlign: 'center',
+                    textDecorationLine: 'underline',
+                  },
+                ]}>
                 {t('catalog.credit')}
               </Text>
             </View>

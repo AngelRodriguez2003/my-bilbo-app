@@ -3,24 +3,25 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { catalogImageUrl } from '@/lib/catalog';
+import { catalogThumbUrl } from '@/lib/catalog';
 import { Motion, Radius } from '@/theme/colors';
 import { useTheme } from '@/theme/ThemeContext';
 
 /**
- * Foto cuadrada de un ejercicio del catálogo. Debajo va siempre la baldosa con
- * el icono: es lo que se ve mientras la foto llega, si falla la red y en los
- * ejercicios escritos a mano, que no tienen foto. Así la fila nunca cambia de
- * forma según haya o no imagen.
+ * Imagen cuadrada de un ejercicio del catálogo. Debajo va siempre la baldosa
+ * con el icono: es lo que se ve mientras la imagen llega, si falla la red y en
+ * los ejercicios escritos a mano, que no tienen imagen. Así la fila nunca
+ * cambia de forma según haya o no imagen.
  *
  * Es decorativa: el nombre del ejercicio ya lo lee la fila que la contiene.
  */
 export function ExerciseThumb({ catalogId, size }: { catalogId?: string; size: number }) {
   const { colors } = useTheme();
-  // Se recuerda QUÉ foto falló, no solo que algo falló: en una lista que
+  // Se recuerda QUÉ imagen falló, no solo que algo falló: en una lista que
   // recicla filas, el mismo componente pasa a mostrar otro ejercicio.
-  const [failedId, setFailedId] = useState<string | null>(null);
-  const showImage = catalogId !== undefined && catalogId !== failedId;
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  // Sin URL si no es del catálogo, o si lo es de uno que ya no existe.
+  const url = catalogThumbUrl(catalogId);
 
   return (
     <View
@@ -36,13 +37,13 @@ export function ExerciseThumb({ catalogId, size }: { catalogId?: string; size: n
         justifyContent: 'center',
       }}>
       <Ionicons name="barbell-outline" size={Math.round(size * 0.42)} color={colors.textMuted} />
-      {showImage ? (
+      {url && url !== failedUrl ? (
         <Image
-          source={catalogImageUrl(catalogId)}
-          recyclingKey={catalogId}
+          source={url}
+          recyclingKey={url}
           contentFit="cover"
           transition={Motion.base}
-          onError={() => setFailedId(catalogId)}
+          onError={() => setFailedUrl(url)}
           style={StyleSheet.absoluteFill}
         />
       ) : null}

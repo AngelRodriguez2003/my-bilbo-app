@@ -4,8 +4,8 @@ import {
   CATALOG,
   catalogEntry,
   catalogIdOf,
-  catalogImageUrl,
-  equipmentLabelKey,
+  catalogName,
+  catalogThumbUrl,
   groupLabelKey,
   MUSCLE_GROUPS,
   muscleLabelKey,
@@ -15,7 +15,7 @@ import {
 } from '@/lib/catalog';
 import type { Exercise } from '@/types/models';
 
-const firstId = (query: string) => searchCatalog(query)[0]?.id;
+const firstId = (query: string, language = 'es') => searchCatalog(query, 'all', language)[0]?.id;
 
 function exercise(overrides: Partial<Exercise>): Exercise {
   return {
@@ -34,13 +34,12 @@ describe('catalog data', () => {
     for (const id of REFERENCED_IDS) expect(catalogEntry(id)).toBeDefined();
   });
 
-  it('has a label in both languages for every muscle, equipment and group', () => {
+  it('has a label in both languages for every muscle and group', () => {
     const lookup = (dict: object, key: string) =>
       key.split('.').reduce<any>((node, part) => node?.[part], dict);
     const keys = new Set<string>(MUSCLE_GROUPS.map(groupLabelKey));
     for (const entry of CATALOG) {
       for (const muscle of entry.muscles) keys.add(muscleLabelKey(muscle));
-      if (entry.equipment) keys.add(equipmentLabelKey(entry.equipment));
     }
     for (const key of keys) {
       expect([key, typeof lookup(es, key)]).toEqual([key, 'string']);
@@ -48,23 +47,43 @@ describe('catalog data', () => {
     }
   });
 
-  it('builds CDN image urls for both frames', () => {
-    const url = new URL(catalogImageUrl('Barbell_Squat'));
+  it('gives every entry a name in both languages and at least one image', () => {
+    for (const entry of CATALOG) {
+      expect(entry.name.en).toBeTruthy();
+      expect(entry.name.es).toBeTruthy();
+      expect(entry.images.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('builds CDN thumbnail urls from the image, not the id', () => {
+    const url = new URL(catalogThumbUrl('bench-press')!);
     expect(url.host).toBe('cdn.jsdelivr.net');
     expect(url.pathname).toMatch(
-      /^\/gh\/yuhonas\/free-exercise-db@[0-9a-f]{40}\/exercises\/Barbell_Squat\/0\.jpg$/,
+      /^\/gh\/RepDB\/exercise-dataset@[0-9a-f]{40}\/images\/flat\/bench-press-start\.webp$/,
     );
-    expect(catalogImageUrl('Barbell_Squat', 1)).toMatch(/\/Barbell_Squat\/1\.jpg$/);
+    // Variante que reutiliza la imagen de otro ejercicio.
+    expect(catalogThumbUrl('pause-deadlift')).toMatch(/\/deadlift-start\.webp$/);
+  });
+
+  it('has no thumbnail for unknown or missing ids', () => {
+    expect(catalogThumbUrl(undefined)).toBeUndefined();
+    expect(catalogThumbUrl('Barbell_Squat')).toBeUndefined();
+  });
+
+  it('names entries in the interface language', () => {
+    const bench = catalogEntry('bench-press')!;
+    expect(catalogName(bench, 'es')).toBe('Press de Banca con Barra');
+    expect(catalogName(bench, 'en')).toBe('Barbell Bench Press');
   });
 });
 
 describe('catalogIdOf', () => {
   it('uses the stored catalog id', () => {
-    expect(catalogIdOf(exercise({ catalogId: 'Pullups' }))).toBe('Pullups');
+    expect(catalogIdOf(exercise({ catalogId: 'pull-up' }))).toBe('pull-up');
   });
 
   it('resolves seeded examples by their fixed id', () => {
-    expect(catalogIdOf(exercise({ id: 'seed-squat' }))).toBe('Barbell_Squat');
+    expect(catalogIdOf(exercise({ id: 'seed-squat' }))).toBe('squat');
   });
 
   it('has nothing for a typed-in custom exercise', () => {
@@ -75,64 +94,66 @@ describe('catalogIdOf', () => {
 describe('normalize', () => {
   it('drops accents, case and punctuation', () => {
     expect(normalize('Jalón  al PECHO')).toBe('jalon al pecho');
-    expect(normalize('3/4 Sit-Up')).toBe('3 4 sit up');
+    expect(normalize('Pull-Up')).toBe('pull up');
   });
 });
 
 describe('searchCatalog', () => {
   it('opens with the most trained lifts when there is no query', () => {
     expect(searchCatalog('').slice(0, 3).map((entry) => entry.id)).toEqual([
-      'Barbell_Bench_Press_-_Medium_Grip',
-      'Barbell_Squat',
-      'Barbell_Deadlift',
+      'bench-press',
+      'squat',
+      'deadlift',
     ]);
     expect(searchCatalog('')).toHaveLength(CATALOG.length);
   });
 
   it.each([
-    ['press banca', 'Barbell_Bench_Press_-_Medium_Grip'],
-    ['Press de banca', 'Barbell_Bench_Press_-_Medium_Grip'],
-    ['sentadilla', 'Barbell_Squat'],
-    ['sentadillas con barra', 'Barbell_Squat'],
-    ['peso muerto', 'Barbell_Deadlift'],
-    ['peso muerto rumano', 'Romanian_Deadlift'],
-    ['dominadas', 'Pullups'],
-    ['jalón al pecho', 'Wide-Grip_Lat_Pulldown'],
-    ['press militar', 'Standing_Military_Press'],
-    ['elevaciones laterales', 'Side_Lateral_Raise'],
-    ['curl martillo', 'Hammer_Curls'],
-    ['press francés', 'EZ-Bar_Skullcrusher'],
-    ['bench press', 'Barbell_Bench_Press_-_Medium_Grip'],
+    ['press banca', 'bench-press'],
+    ['Press de banca', 'bench-press'],
+    ['sentadilla', 'squat'],
+    ['peso muerto', 'deadlift'],
+    ['peso muerto rumano', 'romanian-deadlift'],
+    ['dominada', 'pull-up'],
+    ['dominadas', 'pull-up'],
+    ['sentadillas búlgaras', 'bulgarian-split-squat'],
+    ['jalón al pecho', 'lat-pulldown'],
+    ['press militar', 'ohp'],
+    ['elevación lateral', 'lateral-raise'],
+    ['curl martillo', 'hammer-curl'],
   ])('«%s» → %s', (query, id) => {
     expect(firstId(query)).toBe(id);
   });
 
+  it('also finds English names, whatever the interface language', () => {
+    expect(firstId('bench press', 'es')).toBe('bench-press');
+    expect(firstId('press banca', 'en')).toBe('bench-press');
+  });
+
   it('finds results while the word is still being typed', () => {
-    // «senta» aún podría ser «sentado»; «sentadi» ya solo es sentadilla.
-    expect(firstId('sentadi')).toBe('Barbell_Squat');
-    expect(firstId('domin')).toBe('Pullups');
+    expect(firstId('sentadi')).toBe('squat');
+    expect(firstId('domin')).toBe('pull-up');
   });
 
   it('matches word starts, not arbitrary substrings', () => {
-    const names = searchCatalog('remo').map((entry) => entry.name);
+    // «remo» no debe colarse por «extREMO» ni similares.
+    const names = searchCatalog('remo', 'all', 'es').map((entry) => entry.name.es);
     expect(names.length).toBeGreaterThan(0);
-    expect(names.some((name) => /narrow/i.test(name) && !/\brows?\b/i.test(name))).toBe(false);
+    expect(names.every((name) => /\bremo/i.test(normalize(name)))).toBe(true);
   });
 
-  it('searches by muscle and equipment in Spanish', () => {
-    const chestWithDumbbells = searchCatalog('pecho mancuernas');
-    expect(chestWithDumbbells.length).toBeGreaterThan(0);
-    for (const entry of chestWithDumbbells) {
-      expect(entry.muscles).toContain('chest');
-      expect(entry.equipment).toBe('dumbbell');
+  it('searches by muscle in Spanish', () => {
+    const glutes = searchCatalog('glúteo', 'all', 'es');
+    expect(glutes.length).toBeGreaterThan(0);
+    for (const entry of glutes.filter((e) => !normalize(e.name.es).includes('glute'))) {
+      expect(entry.muscles.some((m) => m.startsWith('gluteus'))).toBe(true);
     }
   });
 
   it('filters by muscle group', () => {
-    const legMuscles = ['quadriceps', 'hamstrings', 'glutes', 'calves', 'adductors', 'abductors'];
     const legs = searchCatalog('', 'legs');
-    expect(legs[0].id).toBe('Barbell_Squat');
-    expect(legs.every((entry) => entry.muscles.some((m) => legMuscles.includes(m)))).toBe(true);
+    expect(legs[0].id).toBe('squat');
+    expect(legs.every((entry) => ['upper_legs', 'lower_legs'].includes(entry.bodyPart))).toBe(true);
     expect(searchCatalog('press banca', 'legs')).toHaveLength(0);
   });
 
