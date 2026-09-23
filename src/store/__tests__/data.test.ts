@@ -138,3 +138,21 @@ describe('exportData', () => {
     expect(Object.keys(useDataStore.getState().exportData().exercises)).toEqual(['gone']);
   });
 });
+
+describe('seedDefaults', () => {
+  it('always uses the same ids, so two devices do not duplicate the samples', () => {
+    useDataStore.setState({ exercises: {}, cycles: {}, sessions: {}, seeded: false });
+    useDataStore.getState().seedDefaults();
+    const first = Object.keys(useDataStore.getState().exercises).sort();
+
+    // Un segundo dispositivo, sembrando por su cuenta: con ids aleatorios
+    // cada uno crearía su propio «Press banca» y al sincronizar la lista
+    // saldría repetida. Con ids fijos, el merge los reconoce como el mismo.
+    useDataStore.setState({ exercises: {}, cycles: {}, sessions: {}, seeded: false });
+    useDataStore.getState().seedDefaults();
+    const second = Object.keys(useDataStore.getState().exercises).sort();
+
+    expect(first).toEqual(second);
+    expect(first.length).toBe(3);
+  });
+});
