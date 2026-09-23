@@ -57,10 +57,18 @@ interface DataState {
   importData: (data: BackupData, mode: ImportMode) => void;
 }
 
-const SEED_EXERCISES: Array<{ i18nKey: string; fallbackName: string }> = [
-  { i18nKey: 'exercises.benchPress', fallbackName: 'Press banca' },
-  { i18nKey: 'exercises.latPulldown', fallbackName: 'Jalón al pecho' },
-  { i18nKey: 'exercises.squat', fallbackName: 'Sentadilla' },
+/**
+ * Los ejemplos llevan id fijo a propósito: es el mismo ejercicio en todos los
+ * dispositivos, así que tiene que ser el mismo REGISTRO. Con ids aleatorios,
+ * un dispositivo que ya había entrenado sin cuenta conserva sus ejemplos al
+ * iniciar sesión (son trabajo real que no se puede tirar) y la nube baja los
+ * suyos: dos «Press banca» distintos para la misma cosa. Con id fijo, el
+ * last-write-wins del merge los funde en uno solo.
+ */
+const SEED_EXERCISES: Array<{ id: string; i18nKey: string; fallbackName: string }> = [
+  { id: 'seed-bench-press', i18nKey: 'exercises.benchPress', fallbackName: 'Press banca' },
+  { id: 'seed-lat-pulldown', i18nKey: 'exercises.latPulldown', fallbackName: 'Jalón al pecho' },
+  { id: 'seed-squat', i18nKey: 'exercises.squat', fallbackName: 'Sentadilla' },
 ];
 
 export const useDataStore = create<DataState>()(
@@ -75,9 +83,8 @@ export const useDataStore = create<DataState>()(
         if (get().seeded) return;
         const exercises: Record<string, Exercise> = {};
         for (const seed of SEED_EXERCISES) {
-          const id = newId();
-          exercises[id] = {
-            id,
+          exercises[seed.id] = {
+            id: seed.id,
             name: seed.fallbackName,
             i18nKey: seed.i18nKey,
             isCustom: false,

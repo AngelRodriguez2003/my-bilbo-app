@@ -1,5 +1,6 @@
 import {
   CYCLE_END_REPS,
+  cycleProgress,
   estimateOneRepMax,
   isCycleEndNear,
   nextWeight,
@@ -124,5 +125,43 @@ describe('isCycleEndNear', () => {
 
   it('uses the exported constant', () => {
     expect(CYCLE_END_REPS).toBe(15);
+  });
+});
+
+describe('cycleProgress', () => {
+  it('is 0 with no sessions and with a single one', () => {
+    expect(cycleProgress([])).toBe(0);
+    expect(cycleProgress([{ weight: 60, reps: 30 }])).toBe(0);
+  });
+
+  it('measures the way from the first set down to the cycle-end reps', () => {
+    const points = [
+      { weight: 60, reps: 30 },
+      { weight: 62.5, reps: 25 },
+    ];
+    // De 30 a 15 hay 15 reps de recorrido; se han hecho 5.
+    expect(cycleProgress(points)).toBeCloseTo(5 / 15);
+  });
+
+  it('caps at 1 once the set reaches or passes the target', () => {
+    expect(
+      cycleProgress([
+        { weight: 60, reps: 30 },
+        { weight: 80, reps: 12 },
+      ]),
+    ).toBe(1);
+  });
+
+  it('never goes negative when reps go back up', () => {
+    expect(
+      cycleProgress([
+        { weight: 60, reps: 25 },
+        { weight: 62.5, reps: 28 },
+      ]),
+    ).toBe(0);
+  });
+
+  it('treats a cycle that starts at the target as finished', () => {
+    expect(cycleProgress([{ weight: 100, reps: 15 }, { weight: 102.5, reps: 14 }])).toBe(1);
   });
 });

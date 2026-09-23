@@ -1,3 +1,11 @@
+import {
+  Archivo_400Regular,
+  Archivo_500Medium,
+  Archivo_600SemiBold,
+  Archivo_700Bold,
+  Archivo_800ExtraBold,
+  useFonts,
+} from '@expo-google-fonts/archivo';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -11,6 +19,7 @@ import { useHydrated } from '@/lib/useHydrated';
 import { useAuthStore } from '@/store/auth';
 import { useDataStore } from '@/store/data';
 import { useWelcomeStore } from '@/store/welcome';
+import { Type } from '@/theme/typography';
 import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 
 void SplashScreen.preventAutoHideAsync();
@@ -20,23 +29,24 @@ void SplashScreen.preventAutoHideAsync();
  * elegido ya: en el primer arranque, y otra vez al cerrar sesión, porque
  * salir de la cuenta reabre exactamente la pregunta que esta pantalla hace.
  *
- * `ready` espera a que las stores persistidas y la sesión de Supabase estén
- * leídas; si no, un usuario con sesión vería la bienvenida un instante.
+ * `ready` espera a que las stores persistidas, la sesión de Supabase y la
+ * tipografía estén listas; si no, un usuario con sesión vería la bienvenida un
+ * instante, o la app arrancaría un fotograma con la fuente del sistema.
  */
-function useWelcomeGate() {
+function useWelcomeGate(fontsReady: boolean) {
   const welcomeHydrated = useHydrated(useWelcomeStore);
   const dataHydrated = useHydrated(useDataStore);
   const authStatus = useAuthStore((s) => s.status);
   const dismissed = useWelcomeStore((s) => s.dismissed);
 
-  const ready = welcomeHydrated && dataHydrated && authStatus !== 'loading';
+  const ready = welcomeHydrated && dataHydrated && authStatus !== 'loading' && fontsReady;
   const showWelcome = ready && isSupabaseConfigured && authStatus === 'signedOut' && !dismissed;
 
   return { ready, showWelcome };
 }
 
-function RootStack() {
-  const { ready, showWelcome } = useWelcomeGate();
+function RootStack({ fontsReady }: { fontsReady: boolean }) {
+  const { ready, showWelcome } = useWelcomeGate(fontsReady);
   const router = useRouter();
 
   useEffect(() => {
@@ -65,8 +75,10 @@ function RootStack() {
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
+          headerTintColor: colors.accent,
+          headerTitleStyle: { ...Type.heading, color: colors.text },
           headerShadowVisible: false,
+          headerBackButtonDisplayMode: 'minimal',
           contentStyle: { backgroundColor: colors.background },
         }}>
         <Stack.Protected guard={showWelcome}>
@@ -94,6 +106,18 @@ function RootStack() {
 }
 
 export default function RootLayout() {
+  // Archivo carga antes del primer fotograma: toda la interfaz la usa, así que
+  // arrancar con la fuente del sistema y cambiarla después reflowea la app
+  // entera a la vista. Si falla la carga, seguimos igualmente — mejor la
+  // tipografía del sistema que una pantalla de arranque eterna.
+  const [fontsLoaded, fontError] = useFonts({
+    Archivo_400Regular,
+    Archivo_500Medium,
+    Archivo_600SemiBold,
+    Archivo_700Bold,
+    Archivo_800ExtraBold,
+  });
+
   // Seed default exercises on first launch (idempotent; also covered on rehydrate).
   useEffect(() => {
     useDataStore.getState().seedDefaults();
@@ -104,7 +128,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <RootStack />
+      <RootStack fontsReady={fontsLoaded || !!fontError} />
     </ThemeProvider>
   );
 }

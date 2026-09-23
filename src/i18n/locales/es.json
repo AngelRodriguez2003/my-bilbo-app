@@ -16,7 +16,12 @@
     "lastSession": "Última: {{weight}} {{unit}} × {{reps}}",
     "sessionsCount": "{{count}} sesiones",
     "deleteExercise": "Eliminar ejercicio",
-    "deleteExerciseConfirm": "¿Eliminar este ejercicio y todo su historial?"
+    "deleteExerciseConfirm": "¿Eliminar este ejercicio y todo su historial?",
+    "emptyTitle": "Empieza por aquí",
+    "emptyBody": "Añade el ejercicio con el que vas a entrenar y arranca su primer ciclo.",
+    "activeCount_one": "{{count}} ciclo en marcha",
+    "activeCount_other": "{{count}} ciclos en marcha",
+    "noneActive": "Ningún ciclo en marcha"
   },
   "cycle": {
     "newCycle": "Nuevo ciclo",
@@ -40,7 +45,12 @@
     "history": "Historial de ciclos",
     "startedOn": "Inicio: {{date}}",
     "endedOn": "Fin: {{date}}",
-    "cycleEndNear": "¡Estás cerca del final del ciclo! Al llegar a ~15 reps, ciérralo y empieza uno nuevo con más peso."
+    "cycleEndNear": "¡Estás cerca del final del ciclo! Al llegar a ~15 reps, ciérralo y empieza uno nuevo con más peso.",
+    "progressTitle": "Avance del ciclo",
+    "progressFromTo": "{{from}} → {{to}} {{unit}}",
+    "noActiveCycleTitle": "Sin ciclo en marcha",
+    "noActiveCycleBody": "Un ciclo arranca al 50% de tu 1RM y sube de peso en cada sesión, hasta que la serie cae a ~15 repeticiones.",
+    "cycleEndNearTitle": "Final de ciclo a la vista"
   },
   "session": {
     "logSession": "Registrar serie",
@@ -51,7 +61,10 @@
     "sessionNumber": "Sesión {{index}}",
     "suggestedWeight": "Peso sugerido",
     "deleteSession": "Eliminar serie",
-    "deleteSessionConfirm": "¿Eliminar esta serie?"
+    "deleteSessionConfirm": "¿Eliminar esta serie?",
+    "nextSet": "Tu próxima serie",
+    "emptyTitle": "Aún no hay series",
+    "emptyBody": "Registra la primera serie explosiva de este ciclo."
   },
   "projection": {
     "title": "Proyección",
@@ -71,7 +84,11 @@
     "noData": "Aún no hay series registradas",
     "currentCycle": "Ciclo actual",
     "repsPerSession": "Reps por sesión",
-    "weightPerSession": "Peso por sesión"
+    "weightPerSession": "Peso por sesión",
+    "emptyTitle": "Nada que dibujar todavía",
+    "cycleEndTarget": "fin de ciclo",
+    "bestSet": "Mejor serie",
+    "sessions": "Sesiones"
   },
   "settings": {
     "title": "Ajustes",

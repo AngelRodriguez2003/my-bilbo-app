@@ -144,8 +144,12 @@ no es lo mismo que pedir salir.
 ### Qué pasa con los datos locales al iniciar sesión
 
 - **Dispositivo recién instalado** (solo los ejercicios de ejemplo, sin ciclos
-  ni series): se descartan y se traen los de la cuenta. Si no, tendrías el
-  "Press banca" de ejemplo y el "Press banca" de tu cuenta, duplicados.
+  ni series): se descartan y se traen los de la cuenta.
+  Los ejemplos llevan además un id fijo (`seed-bench-press`…), no aleatorio:
+  son el mismo registro en todos los dispositivos, así que el merge los funde
+  en vez de dejarte dos "Press banca". Con ids aleatorios, cualquier
+  dispositivo que *no* llegara limpio —el caso de abajo— se traía sus ejemplos
+  y la lista salía repetida.
 - **Habías entrenado sin cuenta**: ese historial se adopta tal cual y sube
   entero en la primera pasada. No se pierde nada.
 - **Entras con una cuenta distinta a la de los datos de ese dispositivo**: los

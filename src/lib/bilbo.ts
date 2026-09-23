@@ -85,6 +85,25 @@ export function projectCycleEnd(
   return { endWeight, sessionsLeft, slope };
 }
 
+/**
+ * Avance del ciclo, de 0 a 1: cuánto se ha recorrido del camino que va de las
+ * repeticiones de la primera sesión a las que lo cierran. Es la medida honesta
+ * del progreso —el ciclo termina cuando caen las reps, no cuando sube el peso—
+ * y con una sola sesión todavía no hay recorrido.
+ */
+export function cycleProgress(
+  points: SessionPoint[],
+  targetReps: number = CYCLE_END_REPS,
+): number {
+  if (points.length === 0) return 0;
+  const first = points[0].reps;
+  const last = points[points.length - 1].reps;
+  // Un ciclo que arranca ya en el objetivo no tiene recorrido que medir.
+  if (first <= targetReps) return 1;
+  const done = (first - last) / (first - targetReps);
+  return Math.min(Math.max(done, 0), 1);
+}
+
 /** True once the last set is at/under the cycle-end rep target. */
 export function isCycleEndNear(lastReps: number, threshold: number = CYCLE_END_REPS): boolean {
   return lastReps <= threshold;

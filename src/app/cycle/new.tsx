@@ -1,14 +1,25 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-import { AppButton, Card, Field, SegmentedControl } from '@/components/ui';
+import {
+  AppButton,
+  Card,
+  Chip,
+  Enter,
+  Field,
+  Screen,
+  SectionTitle,
+  SegmentedControl,
+} from '@/components/ui';
 import { estimateOneRepMax, startWeightFromOneRepMax } from '@/lib/bilbo';
 import { exerciseName, formatWeight, parseDecimal } from '@/lib/format';
 import { useDataStore } from '@/store/data';
 import { useSettingsStore } from '@/store/settings';
-import { Spacing } from '@/theme/colors';
+import { Motion, Radius, Spacing } from '@/theme/colors';
+import { Type } from '@/theme/typography';
 import { useTheme } from '@/theme/ThemeContext';
 import type { Unit } from '@/types/models';
 
@@ -69,33 +80,36 @@ export default function NewCycleScreen() {
   const unitLabel = t(`common.${unit}`);
 
   return (
-    <ScrollView contentContainerStyle={{ padding: Spacing.md, gap: Spacing.md }}>
+    <Screen>
       {exercise ? (
         <Stack.Screen
           options={{ title: `${t('cycle.newCycle')} · ${exerciseName(exercise, t)}` }}
         />
       ) : null}
+
       {exercise ? (
-        <View style={{ gap: 2 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 12, textTransform: 'uppercase' }}>
-            {t('tabs.exercises')}
-          </Text>
-          <Text style={{ color: colors.text, fontSize: 22, fontWeight: '700' }}>
-            {exerciseName(exercise, t)}
-          </Text>
-        </View>
+        <Enter index={0}>
+          <View style={{ gap: Spacing.xs }}>
+            <Text style={[Type.label, { color: colors.textMuted }]}>{t('tabs.exercises')}</Text>
+            <Text style={[Type.title, { color: colors.text }]}>{exerciseName(exercise, t)}</Text>
+          </View>
+        </Enter>
       ) : null}
 
-      <SegmentedControl
-        options={[
-          { value: '1rm' as Mode, label: t('cycle.fromOneRepMax') },
-          { value: 'manual' as Mode, label: t('cycle.manualWeight') },
-        ]}
-        value={mode}
-        onChange={setMode}
-      />
+      <Enter index={1}>
+        <SegmentedControl
+          options={[
+            { value: '1rm' as Mode, label: t('cycle.fromOneRepMax') },
+            { value: 'manual' as Mode, label: t('cycle.manualWeight') },
+          ]}
+          value={mode}
+          onChange={setMode}
+        />
+      </Enter>
 
-      <Card style={{ gap: Spacing.md }}>
+      {/* Sin <Enter>: dentro va el campo con autoFocus y la animación de
+          entrada se lo lleva por delante. */}
+      <Card level={2} style={{ gap: Spacing.md }}>
         {mode === '1rm' ? (
           <>
             <Field
@@ -104,27 +118,37 @@ export default function NewCycleScreen() {
               onChangeText={setOneRepMaxRaw}
               keyboardType="decimal-pad"
               autoFocus
+              error={
+                oneRepMaxRaw.trim() !== '' && !oneRepMax ? t('common.invalidNumber') : undefined
+              }
             />
             {suggested !== null && (
-              <Text style={{ color: colors.accent, fontSize: 13 }}>
-                {t('cycle.suggestedStart')}: {formatWeight(suggested)} {unitLabel}
-              </Text>
+              <Animated.View entering={FadeIn.duration(Motion.base)}>
+                <Chip
+                  icon="sparkles-outline"
+                  tone="accent"
+                  label={`${t('cycle.suggestedStart')}: ${formatWeight(suggested)} ${unitLabel}`}
+                />
+              </Animated.View>
             )}
 
-            <Pressable onPress={() => setShowCalc((v) => !v)} hitSlop={6}>
-              <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>
-                {showCalc ? '−' : '+'} {t('cycle.calc1rm')}
-              </Text>
-            </Pressable>
+            <AppButton
+              label={t('cycle.calc1rm')}
+              variant="ghost"
+              icon={showCalc ? 'chevron-up' : 'calculator-outline'}
+              onPress={() => setShowCalc((open) => !open)}
+            />
             {showCalc && (
-              <View
+              <Animated.View
+                entering={FadeIn.duration(Motion.base)}
+                exiting={FadeOut.duration(Motion.fast)}
                 style={{
                   gap: Spacing.sm,
                   padding: Spacing.md,
-                  borderRadius: 12,
+                  borderRadius: Radius.md,
                   backgroundColor: colors.surfaceHigh,
                 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                <Text style={[Type.caption, { color: colors.textMuted }]}>
                   {t('cycle.calc1rmHint')}
                 </Text>
                 <Field
@@ -141,9 +165,14 @@ export default function NewCycleScreen() {
                 />
                 {estimated !== null && (
                   <>
-                    <Text style={{ color: colors.text, fontSize: 14 }}>
-                      {t('cycle.estimatedOneRepMax')}: {formatWeight(estimated)} {unitLabel}
-                    </Text>
+                    <View style={{ gap: 2 }}>
+                      <Text style={[Type.label, { color: colors.textMuted }]}>
+                        {t('cycle.estimatedOneRepMax')}
+                      </Text>
+                      <Text style={[Type.stat, { color: colors.text }]}>
+                        {formatWeight(estimated)} {unitLabel}
+                      </Text>
+                    </View>
                     <AppButton
                       label={t('cycle.useEstimate', {
                         value: formatWeight(estimated),
@@ -157,7 +186,7 @@ export default function NewCycleScreen() {
                     />
                   </>
                 )}
-              </View>
+              </Animated.View>
             )}
 
             <Field
@@ -175,6 +204,11 @@ export default function NewCycleScreen() {
             onChangeText={setStartWeightRaw}
             keyboardType="decimal-pad"
             autoFocus
+            error={
+              startWeightRaw.trim() !== '' && !manualWeight
+                ? t('common.invalidNumber')
+                : undefined
+            }
           />
         )}
 
@@ -183,10 +217,13 @@ export default function NewCycleScreen() {
           value={incrementRaw}
           onChangeText={setIncrementRaw}
           keyboardType="decimal-pad"
+        error={incrementRaw.trim() !== '' && !increment ? t('common.invalidNumber') : undefined}
         />
+      </Card>
 
-        <View style={{ gap: 6 }}>
-          <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('cycle.unit')}</Text>
+      <Enter index={3}>
+        <Card style={{ gap: Spacing.sm }}>
+          <SectionTitle>{t('cycle.unit')}</SectionTitle>
           <SegmentedControl
             options={[
               { value: 'kg' as Unit, label: t('common.kg') },
@@ -195,10 +232,17 @@ export default function NewCycleScreen() {
             value={unit}
             onChange={setUnit}
           />
-        </View>
-      </Card>
+        </Card>
+      </Enter>
 
-      <AppButton label={t('cycle.startCycle')} onPress={submit} disabled={!canSubmit} />
-    </ScrollView>
+      <Enter index={4}>
+        <AppButton
+          label={t('cycle.startCycle')}
+          icon="play"
+          onPress={submit}
+          disabled={!canSubmit}
+        />
+      </Enter>
+    </Screen>
   );
 }

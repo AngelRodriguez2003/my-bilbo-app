@@ -1,8 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { AppButton, Card, SectionTitle, SegmentedControl } from '@/components/ui';
+import { AppButton, Card, Divider, SectionTitle, SegmentedControl } from '@/components/ui';
 import {
   BackupError,
   backupFileName,
@@ -21,6 +23,7 @@ import { useBackupStore } from '@/store/backup';
 import { useDataStore } from '@/store/data';
 import { useSettingsStore } from '@/store/settings';
 import { Spacing } from '@/theme/colors';
+import { MEASURE, Type } from '@/theme/typography';
 import { useTheme } from '@/theme/ThemeContext';
 
 type Status = { tone: 'ok' | 'error'; text: string } | null;
@@ -122,21 +125,30 @@ export function BackupCard() {
     <Card style={{ gap: Spacing.md }}>
       <View>
         <SectionTitle>{t('settings.backup')}</SectionTitle>
-        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 19 }}>
+        <Text style={[Type.small, { color: colors.textSecondary, maxWidth: MEASURE }]}>
           {t('settings.backupHint')}
         </Text>
       </View>
 
-      <AppButton label={t('settings.exportData')} onPress={handleExport} disabled={busy !== null} />
+      <View style={{ gap: Spacing.sm }}>
+        <AppButton
+          label={t('settings.exportData')}
+          icon="download-outline"
+          onPress={handleExport}
+          loading={busy === 'export'}
+          disabled={busy !== null}
+        />
+        <Text style={[Type.caption, { color: colors.textMuted }]}>
+          {lastBackupAt
+            ? t('settings.lastBackup', { date: formatDateTime(lastBackupAt, i18n.language) })
+            : t('settings.lastBackupNever')}
+        </Text>
+      </View>
 
-      <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-        {lastBackupAt
-          ? t('settings.lastBackup', { date: formatDateTime(lastBackupAt, i18n.language) })
-          : t('settings.lastBackupNever')}
-      </Text>
+      <Divider />
 
-      <View style={{ gap: 6 }}>
-        <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('settings.importMode')}</Text>
+      <View style={{ gap: Spacing.sm }}>
+        <Text style={[Type.label, { color: colors.textMuted }]}>{t('settings.importMode')}</Text>
         <SegmentedControl
           options={[
             { value: 'merge' as ImportMode, label: t('settings.importMerge') },
@@ -145,29 +157,41 @@ export function BackupCard() {
           value={mode}
           onChange={setMode}
         />
-        <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 17 }}>
+        <Text style={[Type.caption, { color: colors.textMuted, maxWidth: MEASURE }]}>
           {t(mode === 'replace' ? 'settings.importReplaceHint' : 'settings.importMergeHint')}
         </Text>
       </View>
 
       <AppButton
         label={t('settings.importData')}
+        icon="folder-open-outline"
         onPress={handleImport}
         variant="secondary"
+        loading={busy === 'import'}
         disabled={busy !== null}
       />
 
-      {busy ? <ActivityIndicator color={colors.accent} /> : null}
-
       {status ? (
-        <Text
-          style={{
-            color: status.tone === 'ok' ? colors.textSecondary : colors.danger,
-            fontSize: 13,
-            lineHeight: 19,
-          }}>
-          {status.text}
-        </Text>
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-start' }}>
+          <Ionicons
+            name={status.tone === 'ok' ? 'checkmark-circle' : 'alert-circle'}
+            size={16}
+            color={status.tone === 'ok' ? colors.success : colors.danger}
+            style={{ marginTop: 2 }}
+          />
+          <Text
+            style={[
+              Type.small,
+              {
+                flex: 1,
+                color: status.tone === 'ok' ? colors.textSecondary : colors.danger,
+              },
+            ]}>
+            {status.text}
+          </Text>
+        </Animated.View>
       ) : null}
     </Card>
   );
