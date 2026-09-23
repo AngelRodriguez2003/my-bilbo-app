@@ -26,12 +26,18 @@ create table if not exists public.exercises (
   user_id     uuid        not null references auth.users (id) on delete cascade,
   name        text        not null,
   i18n_key    text,
+  catalog_id  text,
   is_custom   boolean     not null default true,
   created_at  timestamptz not null,
   updated_at  timestamptz not null,
   deleted     boolean     not null default false,
   primary key (user_id, id)
 );
+
+-- Columnas añadidas después de crear la tabla: `create table if not exists`
+-- no toca una tabla que ya existe, así que llegan por aquí. La app las envía
+-- en cada subida: ejecuta esto ANTES de desplegar una versión que las use.
+alter table public.exercises add column if not exists catalog_id text;
 
 create table if not exists public.cycles (
   id             text        not null,
