@@ -34,8 +34,14 @@ describe('normalizeProjectUrl', () => {
     expect(normalizeProjectUrl(`  ${PROJECT}  `)).toBe(PROJECT);
   });
 
-  it('passes an unparseable value through for supabase-js to reject', () => {
-    expect(normalizeProjectUrl('no-es-una-url')).toBe('no-es-una-url');
+  it('adds https:// when the scheme is missing, and warns', () => {
+    expect(normalizeProjectUrl('abcdefghijklmnop.supabase.co')).toBe(PROJECT);
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats an unparseable value as unconfigured instead of crashing supabase-js', () => {
+    expect(normalizeProjectUrl('no es una url')).toBeUndefined();
+    expect(normalizeProjectUrl('ftp://abcdefghijklmnop.supabase.co')).toBeUndefined();
   });
 
   it('treats missing or empty config as unconfigured', () => {

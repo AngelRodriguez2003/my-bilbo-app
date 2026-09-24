@@ -15,12 +15,30 @@ export function normalizeProjectUrl(raw: string | undefined): string | undefined
   const trimmed = raw.trim().replace(/\/+$/, '');
   if (!trimmed) return undefined;
 
-  let parsed: URL;
+  // Sin esquema (`<ref>.supabase.co`) `new URL` falla, y es un despiste
+  // frecuente al copiar la variable a mano en el panel de EAS.
+  const withScheme = /^[a-z][a-z\d+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  if (withScheme !== trimmed) {
+    console.warn(
+      `[supabase] EXPO_PUBLIC_SUPABASE_URL no lleva esquema; se asume "https://".`,
+    );
+  }
+
+  let parsed: URL | null = null;
   try {
-    parsed = new URL(trimmed);
+    parsed = new URL(withScheme);
   } catch {
-    // Que la URL sea inválida lo dirá supabase-js con su propio mensaje.
-    return trimmed;
+    // Se trata abajo igual que un esquema no soportado.
+  }
+
+  // supabase-js lanza en `createClient` con una URL inválida y eso pasa al
+  // importar el módulo: en un build de release la app se cierra al abrir. Es
+  // mejor quedarse sin sincronización (modo local) que no arrancar.
+  if (!parsed || (parsed.protocol !== 'https:' && parsed.protocol !== 'http:')) {
+    console.warn(
+      `[supabase] EXPO_PUBLIC_SUPABASE_URL no es una URL válida; la sincronización queda desactivada.`,
+    );
+    return undefined;
   }
 
   if (parsed.pathname && parsed.pathname !== '/') {
