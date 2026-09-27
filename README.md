@@ -1,59 +1,93 @@
-# Welcome to your Expo app 👋
+# Project Explosive
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App para entrenar con el **método Bilbo**: una sola serie explosiva por
+ejercicio, que empieza en torno al 50 % del 1RM (27-35 repeticiones) y suma un
+incremento fijo de peso cada sesión (2,5 kg por defecto). El ciclo termina
+cuando la serie cae a unas 15 repeticiones.
 
-## Get started
+La app lleva la cuenta por ti: qué peso toca hoy, cómo evolucionan las
+repeticiones y cuántas sesiones le quedan al ciclo. Funciona en Android, iOS y
+web desde el mismo código ([Expo](https://expo.dev) + Expo Router).
 
-1. Install dependencies
+## Qué hace
 
-   ```bash
-   npm install
-   ```
+- **Ejercicios con foto**: se eligen de un catálogo con buscador y filtros por
+  grupo muscular, o se crean a mano.
+- **Ciclos**: se arrancan desde el 1RM (la app calcula el 50 % redondeado al
+  incremento) o desde un peso inicial. Unidad en kg o lb.
+- **Sesiones**: registrar peso y repeticiones; la app propone el peso de la
+  siguiente.
+- **Progreso**: gráfica de repeticiones por sesión, 1RM estimado (Epley) y
+  proyección del final del ciclo por mínimos cuadrados.
+- **Sincronización opcional** con Supabase entre móvil y ordenador. Sin cuenta,
+  todo se queda en el dispositivo.
+- **Copia de seguridad local**: exportar e importar el progreso en un JSON
+  (fusionando o reemplazando).
+- Español e inglés, tema claro/oscuro.
 
-2. Start the app
+## Puesta en marcha
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Requisitos: Node 20 y npm.
 
 ```bash
-npm run reset-project
+npm install
+cp .env.example .env   # opcional: solo hace falta para la sincronización
+npm run web            # o: npm run android / npm run ios
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Sin `.env` la app arranca igual, con la sincronización desactivada. Para
+configurarla, sigue [SYNC.md](SYNC.md).
 
-### Other setup steps
+En móvil la app usa un **development build** (`expo-dev-client`), no Expo Go.
+El perfil está en [`eas.json`](eas.json):
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npx eas-cli@latest build --profile development --platform android
+```
 
-## Learn more
+## Scripts
 
-To learn more about developing your project with Expo, look at the following resources:
+| Comando | Qué hace |
+| --- | --- |
+| `npm start` | Servidor de desarrollo de Expo |
+| `npm run web` / `android` / `ios` | Arranca directamente en esa plataforma |
+| `npm test` | Tests con Jest |
+| `npm run lint` | ESLint |
+| `npx tsc --noEmit` | Comprobación de tipos |
+| `npm run build:web` | Export estático de la web en `dist/` |
+| `npm run serve:web` | Sirve `dist/` en local |
+| `npm run deploy` / `deploy:prod` | Publica la web en EAS Hosting (preview / producción) |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Estructura
 
-## Join the community
+```
+src/
+  app/          pantallas (Expo Router, rutas por archivo)
+    (tabs)/     Ejercicios, Progreso y Ajustes
+  components/   componentes de UI compartidos
+  lib/          lógica pura: método Bilbo, sync, merge, backup, catálogo
+  store/        estado global (Zustand, persistido en el dispositivo)
+  i18n/         traducciones es/en
+  theme/        colores, tipografía y tema
+  data/         catálogo de ejercicios generado
+supabase/       esquema SQL con políticas RLS
+scripts/        generador del catálogo
+```
 
-Join our community of developers creating universal apps.
+Las fórmulas del método viven en [`src/lib/bilbo.ts`](src/lib/bilbo.ts), sin
+dependencias de React, para poder testearlas por separado.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## CI y despliegue
+
+- **CI** ([`ci.yml`](.github/workflows/ci.yml)): en cada Pull Request comprueba
+  tipos, pasa los tests y hace el build web.
+- **Producción** ([`deploy-prod.yml`](.github/workflows/deploy-prod.yml)): al
+  mergear un PR en `main`, despliega la web en EAS Hosting.
+- **Keepalive** ([`supabase-keepalive.yml`](.github/workflows/supabase-keepalive.yml)):
+  evita que el proyecto gratuito de Supabase se pause por inactividad.
+
+Más detalle en [DEPLOY.md](DEPLOY.md) (web) y [SYNC.md](SYNC.md)
+(sincronización, conflictos y cursores).
 
 ## Créditos
 
