@@ -21,6 +21,12 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+    "ios": {
+      "bundleIdentifier": "com.angelrodriguez2003.projectexplosive",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
     "plugins": [
       "expo-router",
       [
