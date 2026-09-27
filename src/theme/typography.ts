@@ -1,4 +1,4 @@
-import type { TextStyle } from 'react-native';
+import { Platform, type TextStyle } from 'react-native';
 
 /**
  * Archivo: una grotesca de trazo firme, con cuerpo de sobra en los pesos altos
@@ -17,6 +17,14 @@ export const FontFamily = {
   black: 'Archivo_800ExtraBold',
 } as const;
 
+/**
+ * Tracking negativo, salvo en iOS. Allí React Native mide el texto con
+ * `letterSpacing` negativo unos puntos más estrecho de lo que lo dibuja, y todo
+ * texto que toma su propio ancho (títulos de cabecera, etiquetas de botón)
+ * acaba recortado o con puntos suspensivos. El positivo no tiene el problema.
+ */
+const tight = (value: number) => (Platform.OS === 'ios' ? 0 : value);
+
 /** Cifras de ancho fijo: los pesos no bailan al cambiar de sesión. */
 const tabular: TextStyle = { fontVariant: ['tabular-nums'] };
 
@@ -30,39 +38,39 @@ export const Type = {
     fontFamily: FontFamily.black,
     fontSize: 46,
     lineHeight: 48,
-    letterSpacing: -1.6,
+    letterSpacing: tight(-1.6),
     ...tabular,
   },
   display: {
     fontFamily: FontFamily.black,
     fontSize: 32,
     lineHeight: 36,
-    letterSpacing: -1,
+    letterSpacing: tight(-1),
   },
   title: {
     fontFamily: FontFamily.bold,
     fontSize: 24,
     lineHeight: 29,
-    letterSpacing: -0.6,
+    letterSpacing: tight(-0.6),
   },
   heading: {
     fontFamily: FontFamily.bold,
     fontSize: 19,
     lineHeight: 24,
-    letterSpacing: -0.3,
+    letterSpacing: tight(-0.3),
   },
   subheading: {
     fontFamily: FontFamily.semibold,
     fontSize: 16,
     lineHeight: 21,
-    letterSpacing: -0.1,
+    letterSpacing: tight(-0.1),
   },
   /** Cifra de una tarjeta de dato. */
   stat: {
     fontFamily: FontFamily.bold,
     fontSize: 21,
     lineHeight: 25,
-    letterSpacing: -0.4,
+    letterSpacing: tight(-0.4),
     ...tabular,
   },
   body: {
@@ -102,7 +110,7 @@ export const Type = {
     fontFamily: FontFamily.semibold,
     fontSize: 16,
     lineHeight: 20,
-    letterSpacing: -0.1,
+    letterSpacing: tight(-0.1),
   },
 } as const satisfies Record<string, TextStyle>;
 
